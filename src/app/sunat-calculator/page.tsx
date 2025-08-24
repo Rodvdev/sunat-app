@@ -16,13 +16,13 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { SunatCalculator, SunatCalculationParams, SunatCalculationResult } from '@/lib/sunat-calculator';
 
 const formSchema = z.object({
-  year: z.coerce.number().min(2020).max(2030),
-  monthlyIncome: z.coerce.number().min(0).max(1000000),
-  additionalIncome: z.coerce.number().min(0).max(1000000),
-  additionalMonth: z.coerce.number().min(1).max(12),
-  calculationMonth: z.coerce.number().min(1).max(12),
-  previousRetentions: z.coerce.number().min(0).max(1000000),
-  roundingDecimals: z.coerce.number().min(0).max(4)
+  year: z.number().min(2020).max(2030),
+  monthlyIncome: z.number().min(0).max(1000000),
+  additionalIncome: z.number().min(0).max(1000000),
+  additionalMonth: z.number().min(1).max(12),
+  calculationMonth: z.number().min(1).max(12),
+  previousRetentions: z.number().min(0).max(1000000),
+  roundingDecimals: z.number().min(0).max(4)
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -49,7 +49,7 @@ export default function SunatCalculatorPage() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      year: 2024,
+      year: 2025,
       monthlyIncome: 0,
       additionalIncome: 0,
       additionalMonth: 12,
@@ -115,7 +115,12 @@ export default function SunatCalculatorPage() {
                       <FormItem>
                         <FormLabel>Año</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="2024" {...field} />
+                          <Input 
+                            type="number" 
+                            placeholder="2024" 
+                            {...field} 
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -129,7 +134,13 @@ export default function SunatCalculatorPage() {
                       <FormItem>
                         <FormLabel>Ingreso Mensual (S/)</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0.00" step="0.01" {...field} />
+                          <Input 
+                            type="number" 
+                            placeholder="0.00" 
+                            step="0.01" 
+                            {...field} 
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
                         </FormControl>
                         <FormDescription>
                           Ingreso mensual base
@@ -146,7 +157,13 @@ export default function SunatCalculatorPage() {
                       <FormItem>
                         <FormLabel>Ingreso Adicional (S/)</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0.00" step="0.01" {...field} />
+                          <Input 
+                            type="number" 
+                            placeholder="0.00" 
+                            step="0.01" 
+                            {...field} 
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
                         </FormControl>
                         <FormDescription>
                           Ingreso extraordinario o bonificación
@@ -162,7 +179,7 @@ export default function SunatCalculatorPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Mes del Ingreso Adicional</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                        <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecciona el mes" />
@@ -187,7 +204,7 @@ export default function SunatCalculatorPage() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Mes de Inicio del Cálculo</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value?.toString()}>
+                        <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecciona el mes" />
@@ -213,7 +230,13 @@ export default function SunatCalculatorPage() {
                       <FormItem>
                         <FormLabel>Retenciones Previas (S/)</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="0.00" step="0.01" {...field} />
+                          <Input 
+                            type="number" 
+                            placeholder="0.00" 
+                            step="0.01" 
+                            {...field} 
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
                         </FormControl>
                         <FormDescription>
                           Retenciones acumuladas hasta el mes anterior
@@ -230,7 +253,14 @@ export default function SunatCalculatorPage() {
                       <FormItem>
                         <FormLabel>Decimales de Redondeo</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder="2" min="0" max="4" {...field} />
+                          <Input 
+                            type="number" 
+                            placeholder="2" 
+                            min="0" 
+                            max="4" 
+                            {...field} 
+                            onChange={(e) => field.onChange(Number(e.target.value))}
+                          />
                         </FormControl>
                         <FormDescription>
                           Número de decimales para redondear (0-4)
@@ -383,7 +413,7 @@ export default function SunatCalculatorPage() {
                   Ingresa los parámetros
                 </h3>
                 <p className="text-gray-500">
-                  Completa el formulario y haz clic en "Calcular Retenciones" para ver los resultados
+                  Completa el formulario y haz clic en &quot;Calcular Retenciones&quot; para ver los resultados
                 </p>
               </CardContent>
             </Card>

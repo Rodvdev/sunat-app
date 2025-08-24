@@ -1,102 +1,187 @@
-import Image from "next/image";
+import Link from 'next/link';
+import { Calculator, FileText, TrendingUp, Shield, Zap, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+const features = [
+  {
+    icon: Calculator,
+    title: 'Calculadora SUNAT',
+    description: 'Calcula tus retenciones de impuestos de forma precisa según la normativa peruana vigente.',
+    href: '/sunat-calculator'
+  },
+  {
+    icon: TrendingUp,
+    title: 'Análisis de Impuestos',
+    description: 'Visualiza el desglose mensual de tus retenciones y proyecciones anuales.',
+    href: '/sunat-calculator'
+  },
+  {
+    icon: Shield,
+    title: 'Cumplimiento Normativo',
+    description: 'Asegúrate de cumplir con todas las obligaciones fiscales de SUNAT.',
+    href: '/documentation'
+  },
+  {
+    icon: FileText,
+    title: 'Reportes Detallados',
+    description: 'Genera reportes completos para tu contabilidad y auditoría.',
+    href: '/documentation'
+  }
+];
+
+const stats = [
+  { label: 'UIT 2024', value: 'S/ 5,500', description: 'Unidad Impositiva Tributaria' },
+  { label: 'Deducción 7 UIT', value: 'S/ 38,500', description: 'Deducción anual estándar' },
+  { label: 'Tramo Máximo', value: '30%', description: 'Tasa impositiva máxima' },
+  { label: 'Tramo Mínimo', value: '8%', description: 'Tasa impositiva mínima' }
+];
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <section className="bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 sm:text-6xl mb-6">
+              Calculadora SUNAT
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+              Calcula tus retenciones de impuestos de forma precisa y confiable según la normativa peruana. 
+              Optimiza tu planificación fiscal con nuestra herramienta especializada.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/sunat-calculator">
+                <Button size="lg" className="text-lg px-8 py-6">
+                  <Calculator className="mr-2 h-5 w-5" />
+                  Calcular Ahora
+                </Button>
+              </Link>
+              <Link href="/documentation">
+                <Button variant="outline" size="lg" className="text-lg px-8 py-6">
+                  <FileText className="mr-2 h-5 w-5" />
+                  Ver Documentación
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </section>
+
+      {/* Stats Section */}
+      <section className="py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {stats.map((stat) => (
+              <Card key={stat.label} className="text-center">
+                <CardContent className="pt-6">
+                  <div className="text-2xl font-bold text-blue-600 mb-2">
+                    {stat.value}
+                  </div>
+                  <div className="text-sm font-medium text-gray-900 mb-1">
+                    {stat.label}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {stat.description}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Características Principales
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Nuestra calculadora SUNAT ofrece todas las herramientas necesarias para una gestión fiscal eficiente
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {features.map((feature) => (
+              <Card key={feature.title} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <feature.icon className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <CardDescription className="text-base">
+                    {feature.description}
+                  </CardDescription>
+                  <Link href={feature.href} className="inline-flex items-center text-blue-600 hover:text-blue-800 mt-4 font-medium">
+                    Saber más <Zap className="ml-1 h-4 w-4" />
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 bg-blue-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            ¿Listo para optimizar tus impuestos?
+          </h2>
+          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            Únete a miles de usuarios que ya confían en nuestra calculadora SUNAT para gestionar sus obligaciones fiscales
+          </p>
+          <Link href="/sunat-calculator">
+            <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
+              <Calculator className="mr-2 h-5 w-5" />
+              Comenzar Ahora
+            </Button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div>
+              <div className="flex items-center space-x-2 mb-4">
+                <Calculator className="h-8 w-8 text-blue-400" />
+                <span className="text-xl font-bold">SUNAT App</span>
+              </div>
+              <p className="text-gray-400">
+                Herramienta especializada para el cálculo de impuestos según la normativa peruana.
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Enlaces Útiles</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link href="/sunat-calculator" className="hover:text-white">Calculadora</Link></li>
+                <li><Link href="/documentation" className="hover:text-white">Documentación</Link></li>
+                <li><Link href="/settings" className="hover:text-white">Configuración</Link></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Soporte</h3>
+              <p className="text-gray-400">
+                Para consultas técnicas o soporte, contacta a nuestro equipo especializado.
+              </p>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2024 SUNAT App. Todos los derechos reservados.</p>
+          </div>
+        </div>
       </footer>
     </div>
   );
