@@ -7,6 +7,20 @@ export interface SunatCalculationParams {
   previousRetentions: number;
   roundingDecimals: number;
   deductibleExpenses?: DeductibleExpenses;
+  // Nuevos campos para ingresos adicionales
+  gratificaciones?: number;
+  bonificaciones?: number;
+  utilidades?: number;
+  cts?: number;                    // Compensación por Tiempo de Servicios
+  asignacionFamiliar?: number;     // Asignación Familiar
+  gratificacionesMonth?: number;   // Mes de gratificaciones (Julio y Diciembre)
+  bonificacionesMonth?: number;    // Mes de bonificaciones
+  utilidadesMonth?: number;        // Mes de utilidades
+  ctsMonth?: number;               // Mes de CTS (Mayo y Noviembre)
+  asignacionFamiliarMonth?: number; // Mes de asignación familiar
+  // Nuevos campos para cálculo de gratificaciones
+  insuranceType?: 'essalud' | 'eps'; // Tipo de seguro de salud
+  startWorkMonth?: number;         // Mes de inicio de trabajo (1-12)
 }
 
 export interface DeductibleExpenses {
@@ -22,6 +36,13 @@ export interface MonthlyCalculation {
   monthName: string;
   monthlyIncome: number;
   additionalIncome: number;
+  // Nuevos campos para ingresos adicionales
+  gratificaciones: number;
+  bonificaciones: number;
+  utilidades: number;
+  cts: number;
+  asignacionFamiliar: number;
+  totalMonthlyIncome: number; // Ingreso total del mes (base + adicionales + gratificaciones + bonificaciones + utilidades + CTS + asignación familiar)
   projectedAccumulatedIncome: number;
   projectedNetIncome: number;
   projectedTax: number;
@@ -29,6 +50,11 @@ export interface MonthlyCalculation {
   previousAccumulatedRetention: number;
   monthlyRetention: number;
   observations: string;
+  // Nuevos campos para gratificaciones
+  gratificacionBase?: number;      // Cálculo base de gratificación
+  gratificacionBono?: number;      // Bono por tipo de seguro
+  gratificacionTotal?: number;     // Total de gratificación
+  mesesTrabajados?: number;        // Meses trabajados hasta el mes actual
 }
 
 export interface SunatCalculationResult {
@@ -40,7 +66,32 @@ export interface SunatCalculationResult {
     totalAnnualRetention: number;
     averageMonthlyRetention: number;
     deductibleExpenses: DeductibleExpensesSummary;
+    // Nuevos campos para resumen de ingresos adicionales
+    totalGratificaciones: number;
+    totalBonificaciones: number;
+    totalUtilidades: number;
+    totalCTS: number;
+    totalAsignacionFamiliar: number;
+    totalAdditionalIncome: number; // Suma de todos los ingresos adicionales
+    // Nuevos campos para gratificaciones
+    gratificacionesCalculadas: {
+      julio?: GratificacionDetail;
+      diciembre?: GratificacionDetail;
+    };
   };
+}
+
+// Nueva interfaz para detalles de gratificación
+export interface GratificacionDetail {
+  mes: number;
+  mesName: string;
+  mesesTrabajados: number;
+  sueldoBase: number;
+  calculoBase: number;
+  bonoSeguro: number;
+  totalGratificacion: number;
+  tipoSeguro: 'essalud' | 'eps';
+  porcentajeSeguro: number;
 }
 
 export interface DeductibleExpensesSummary {
@@ -80,17 +131,99 @@ export class SunatCalculator {
     essaludContributions: 1.00 // 100% para aportaciones a EsSalud
   };
 
+  // Porcentajes de bono por tipo de seguro para gratificaciones
+  private readonly GRATIFICACION_BONO_PORCENTAJES = {
+    essalud: 0.09,    // 9% para EsSalud
+    eps: 0.0675       // 6.75% para EPS
+  };
+
   private readonly MONTH_NAMES = [
     'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
     'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
   ];
 
+  /**
+   * Calcula la gratificación según la normativa peruana
+   * Fórmula: (Sueldo × Meses Trabajados) ÷ 6 + Bono de Seguro
+   */
+  private calculateGratificacion(
+    month: number, 
+    monthlyIncome: number, 
+    insuranceType: 'essalud' | 'eps' = 'essalud',
+    startWorkMonth: number = 1
+  ): { base: number; bono: number; total: number; mesesTrabajados: number } {
+    // Meses trabajados desde el inicio hasta el mes actual
+    const mesesTrabajados = Math.max(1, month - startWorkMonth + 1);
+    
+    // Cálculo base: (Sueldo × Meses Trabajados) ÷ 6
+    const calculoBase = (monthlyIncome * mesesTrabajados) / 6;
+    
+    // Bono por tipo de seguro
+    const porcentajeSeguro = this.GRATIFICACION_BONO_PORCENTAJES[insuranceType];
+    const bonoSeguro = calculoBase * porcentajeSeguro;
+    
+    // Total de gratificación
+    const totalGratificacion = calculoBase + bonoSeguro;
+    
+    return {
+      base: this.round(calculoBase, 2),
+      bono: this.round(bonoSeguro, 2),
+      total: this.round(totalGratificacion, 2),
+      mesesTrabajados
+    };
+  }
+
   calculate(params: SunatCalculationParams): SunatCalculationResult {
     const monthlyCalculations: MonthlyCalculation[] = [];
     let accumulatedRetention = params.previousRetentions;
+    
+    // Valores por defecto para parámetros opcionales
+    const insuranceType = params.insuranceType || 'essalud';
+    const startWorkMonth = params.startWorkMonth || 1;
 
-    // Calculate total projected annual income including additional income
-    const totalProjectedAnnualIncome = (params.monthlyIncome * 12) + params.additionalIncome;
+    // Calculate total projected annual income including all additional income types
+    let totalProjectedAnnualIncome = params.monthlyIncome * 12;
+    
+    // Add additional income (single month)
+    totalProjectedAnnualIncome += params.additionalIncome || 0;
+    
+    // Add gratificaciones (July and December by default, or custom month)
+    if (params.gratificacionesMonth) {
+      totalProjectedAnnualIncome += params.gratificaciones || 0;
+    } else {
+      // Calcular gratificaciones reales para julio y diciembre
+      // Solo si el trabajador ya estaba trabajando en esos meses
+      let gratificacionJulio = 0;
+      let gratificacionDiciembre = 0;
+      
+      if (7 >= startWorkMonth) {
+        const gratificacionJulioCalc = this.calculateGratificacion(7, params.monthlyIncome, insuranceType, startWorkMonth);
+        gratificacionJulio = gratificacionJulioCalc.total;
+      }
+      
+      if (12 >= startWorkMonth) {
+        const gratificacionDiciembreCalc = this.calculateGratificacion(12, params.monthlyIncome, insuranceType, startWorkMonth);
+        gratificacionDiciembre = gratificacionDiciembreCalc.total;
+      }
+      
+      totalProjectedAnnualIncome += gratificacionJulio + gratificacionDiciembre;
+    }
+    
+    // Add bonificaciones (custom month)
+    totalProjectedAnnualIncome += params.bonificaciones || 0;
+    
+    // Add utilidades (custom month)
+    totalProjectedAnnualIncome += params.utilidades || 0;
+    
+    // Add CTS (May and November by default, or custom month)
+    if (params.ctsMonth) {
+      totalProjectedAnnualIncome += params.cts || 0;
+    } else {
+      totalProjectedAnnualIncome += (params.cts || 0) * 2; // May and November
+    }
+    
+    // Add asignación familiar (monthly)
+    totalProjectedAnnualIncome += (params.asignacionFamiliar || 0) * 12;
 
     // Calculate deductible expenses if provided
     const deductibleExpensesSummary = this.calculateDeductibleExpenses(params.deductibleExpenses);
@@ -100,9 +233,58 @@ export class SunatCalculator {
       const monthIndex = month - 1;
       const monthName = this.MONTH_NAMES[monthIndex];
       
-      // Calculate monthly income (including additional if applicable)
+      // Calculate monthly income and additional income types
       const monthlyIncome = params.monthlyIncome;
-      const additionalIncome = month === params.additionalMonth ? params.additionalIncome : 0;
+      const additionalIncome = month === params.additionalMonth ? (params.additionalIncome || 0) : 0;
+      
+      // Calculate gratificaciones (Julio y Diciembre por defecto)
+      let gratificaciones = 0;
+      let gratificacionDetail: Partial<{
+        gratificacionBase: number;
+        gratificacionBono: number;
+        gratificacionTotal: number;
+        mesesTrabajados: number;
+      }> | null = null;
+      
+      if (params.gratificacionesMonth && month === params.gratificacionesMonth) {
+        // Mes personalizado especificado
+        gratificaciones = params.gratificaciones || 0;
+      } else if (!params.gratificacionesMonth && (month === 7 || month === 12)) {
+        // Meses por defecto solo si no se especifica mes personalizado
+        // Y solo si el trabajador ya estaba trabajando en ese mes
+        if (month >= startWorkMonth) {
+          const gratificacionCalc = this.calculateGratificacion(month, params.monthlyIncome, insuranceType, startWorkMonth);
+          gratificaciones = gratificacionCalc.total;
+          gratificacionDetail = {
+            gratificacionBase: gratificacionCalc.base,
+            gratificacionBono: gratificacionCalc.bono,
+            gratificacionTotal: gratificacionCalc.total,
+            mesesTrabajados: gratificacionCalc.mesesTrabajados
+          };
+        }
+      }
+      
+      // Calculate bonificaciones
+      const bonificaciones = month === params.bonificacionesMonth ? (params.bonificaciones || 0) : 0;
+      
+      // Calculate utilidades
+      const utilidades = month === params.utilidadesMonth ? (params.utilidades || 0) : 0;
+      
+      // Calculate CTS (Mayo y Noviembre por defecto)
+      let cts = 0;
+      if (params.ctsMonth && month === params.ctsMonth) {
+        // Mes personalizado especificado
+        cts = params.cts || 0;
+      } else if (!params.ctsMonth && (month === 5 || month === 11)) {
+        // Meses por defecto solo si no se especifica mes personalizado
+        cts = params.cts || 0;
+      }
+      
+      // Calculate Asignación Familiar (mensual)
+      const asignacionFamiliar = params.asignacionFamiliar || 0;
+      
+      // Total monthly income
+      const totalMonthlyIncome = monthlyIncome + additionalIncome + gratificaciones + bonificaciones + utilidades + cts + asignacionFamiliar;
       
       // Projected net income (after 7 UIT deduction and deductible expenses)
       const projectedNetIncome = Math.max(0, totalProjectedAnnualIncome - this.DEDUCTION_7_UIT - deductibleExpensesSummary.totalDeduction);
@@ -119,28 +301,104 @@ export class SunatCalculator {
       // Update accumulated retention
       accumulatedRetention += monthlyRetention;
 
+      // Build observations
+      const observations = [];
+      if (additionalIncome > 0) observations.push('Ingreso adicional');
+      if (gratificaciones > 0) observations.push('Gratificación');
+      if (bonificaciones > 0) observations.push('Bonificación');
+      if (utilidades > 0) observations.push('Utilidades');
+      if (cts > 0) observations.push('CTS');
+      if (asignacionFamiliar > 0) observations.push('Asignación Familiar');
+
       const calculation: MonthlyCalculation = {
         month,
         monthName,
         monthlyIncome,
         additionalIncome,
+        gratificaciones,
+        bonificaciones,
+        utilidades,
+        cts,
+        asignacionFamiliar,
+        totalMonthlyIncome,
         projectedAccumulatedIncome: totalProjectedAnnualIncome,
         projectedNetIncome,
         projectedTax,
         expectedAccumulatedRetention,
         previousAccumulatedRetention: accumulatedRetention - monthlyRetention,
         monthlyRetention,
-        observations: additionalIncome > 0 ? 'Mes con adicional' : ''
+        observations: observations.join(', ') || '',
+        ...gratificacionDetail
       };
 
       monthlyCalculations.push(calculation);
     }
 
     // Calculate summary
-    const totalAnnualIncome = params.monthlyIncome * 12 + params.additionalIncome;
+    const totalAnnualIncome = totalProjectedAnnualIncome; // Use the same calculation
+    
     const totalAnnualTax = this.calculateProgressiveTax(Math.max(0, totalAnnualIncome - this.DEDUCTION_7_UIT - deductibleExpensesSummary.totalDeduction));
     const totalAnnualRetention = monthlyCalculations.reduce((sum, calc) => sum + calc.monthlyRetention, 0);
     const averageMonthlyRetention = monthlyCalculations.length > 0 ? totalAnnualRetention / monthlyCalculations.length : 0;
+
+    // Calculate totals for each income type
+    let totalGratificaciones = 0;
+    let gratificacionesCalculadas: {
+      julio?: GratificacionDetail;
+      diciembre?: GratificacionDetail;
+    } = {};
+    
+    if (params.gratificacionesMonth) {
+      totalGratificaciones = params.gratificaciones || 0;
+    } else {
+      // Calcular gratificaciones reales para julio y diciembre
+      // Solo si el trabajador ya estaba trabajando en esos meses
+      let gratificacionJulio = 0;
+      let gratificacionDiciembre = 0;
+      let gratificacionJulioCalc: { base: number; bono: number; total: number; mesesTrabajados: number } | null = null;
+      let gratificacionDiciembreCalc: { base: number; bono: number; total: number; mesesTrabajados: number } | null = null;
+      
+      if (7 >= startWorkMonth) {
+        gratificacionJulioCalc = this.calculateGratificacion(7, params.monthlyIncome, insuranceType, startWorkMonth);
+        gratificacionJulio = gratificacionJulioCalc.total;
+      }
+      
+      if (12 >= startWorkMonth) {
+        gratificacionDiciembreCalc = this.calculateGratificacion(12, params.monthlyIncome, insuranceType, startWorkMonth);
+        gratificacionDiciembre = gratificacionDiciembreCalc.total;
+      }
+      
+      totalGratificaciones = gratificacionJulio + gratificacionDiciembre;
+      
+      gratificacionesCalculadas = {
+        julio: 7 >= startWorkMonth && gratificacionJulioCalc ? {
+          mes: 7,
+          mesName: 'Julio',
+          mesesTrabajados: gratificacionJulioCalc.mesesTrabajados,
+          sueldoBase: params.monthlyIncome,
+          calculoBase: gratificacionJulioCalc.base,
+          bonoSeguro: gratificacionJulioCalc.bono,
+          totalGratificacion: gratificacionJulioCalc.total,
+          tipoSeguro: insuranceType,
+          porcentajeSeguro: this.GRATIFICACION_BONO_PORCENTAJES[insuranceType] * 100
+        } : undefined,
+        diciembre: 12 >= startWorkMonth && gratificacionDiciembreCalc ? {
+          mes: 12,
+          mesName: 'Diciembre',
+          mesesTrabajados: gratificacionDiciembreCalc.mesesTrabajados,
+          sueldoBase: params.monthlyIncome,
+          calculoBase: gratificacionDiciembreCalc.base,
+          bonoSeguro: gratificacionDiciembreCalc.bono,
+          totalGratificacion: gratificacionDiciembreCalc.total,
+          tipoSeguro: insuranceType,
+          porcentajeSeguro: this.GRATIFICACION_BONO_PORCENTAJES[insuranceType] * 100
+        } : undefined
+      };
+    }
+    
+    const totalCTS = params.ctsMonth ? 
+      (params.cts || 0) : 
+      (params.cts || 0) * 2;
 
     return {
       parameters: params,
@@ -150,7 +408,14 @@ export class SunatCalculator {
         totalAnnualTax,
         totalAnnualRetention,
         averageMonthlyRetention,
-        deductibleExpenses: deductibleExpensesSummary
+        deductibleExpenses: deductibleExpensesSummary,
+        totalGratificaciones,
+        totalBonificaciones: params.bonificaciones || 0,
+        totalUtilidades: params.utilidades || 0,
+        totalCTS,
+        totalAsignacionFamiliar: (params.asignacionFamiliar || 0) * 12,
+        totalAdditionalIncome: (params.additionalIncome || 0) + totalGratificaciones + (params.bonificaciones || 0) + (params.utilidades || 0) + totalCTS + (params.asignacionFamiliar || 0) * 12,
+        gratificacionesCalculadas
       }
     };
   }

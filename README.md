@@ -80,3 +80,20 @@ npm run lint    # Run ESLint
 - **Gastos Deducibles**: Deductible expenses documentation and calculator
 - **Documentación**: Comprehensive SUNAT guidelines
 - **Configuración**: System settings and preferences
+
+## 🆕 Nuevas Funcionalidades - 2025
+
+### **Gastos Deducibles 2025**
+- **5 categorías**: Restaurantes (15%), Servicios Médicos (30%), Servicios Profesionales (30%), Alquiler (30%), EsSalud (100%)
+- **Límite máximo**: 3 UIT adicionales (S/ 16,050)
+- **Validación automática**: Solo aplica si ingresos > 7 UIT
+- **Integración completa**: Con cálculos fiscales principales
+
+### **Tipos de Ingresos Adicionales** ⭐ **NUEVO**
+- **Gratificaciones**: Julio y Diciembre por defecto (mes personalizable)
+- **Bonificaciones**: Mes personalizable
+- **Utilidades**: Mes personalizable  
+- **CTS**: Compensación por Tiempo de Servicios (Mayo y Noviembre por defecto, mes personalizable)
+- **Asignación Familiar**: Mensual
+- **Ingreso Adicional**: Monto único en mes específico
+- **Cálculo inteligente**: Proyecciones anuales actualizadas automáticamente

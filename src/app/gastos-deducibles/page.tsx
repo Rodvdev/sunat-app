@@ -250,7 +250,7 @@ export default function GastosDeduciblesPage() {
                     </ul>
                   </div>
                   <div className="p-3 bg-[#E8F5E8] rounded border border-[#4CAF50]">
-                    <p className="font-medium text-[#2E7D32]">Montos < S/ 2,000:</p>
+                    <p className="font-medium text-[#2E7D32]">Montos &lt; S/ 2,000:</p>
                     <p className="text-sm text-[#2E7D32]">Sin restricción de medio de pago</p>
                   </div>
                 </div>

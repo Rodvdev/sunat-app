@@ -24,7 +24,7 @@ describe('Additional Income Scenarios', () => {
       // January should have additional income
       const january = result.monthlyCalculations.find(m => m.month === 1);
       expect(january?.additionalIncome).toBe(15000);
-      expect(january?.observations).toBe('Mes con adicional');
+      expect(january?.observations).toBe('Ingreso adicional');
       
       // All months should project the same annual income
       result.monthlyCalculations.forEach(month => {

@@ -110,7 +110,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
       const result = calculator.calculate(params);
       const juneCalculation = result.monthlyCalculations.find(m => m.month === 6);
       expect(juneCalculation?.additionalIncome).toBe(10000);
-      expect(juneCalculation?.observations).toBe('Mes con adicional');
+      expect(juneCalculation?.observations).toBe('Ingreso adicional');
     });
 
     test('should calculate higher annual income due to additional', () => {
