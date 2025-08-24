@@ -29,7 +29,29 @@ const formSchema = z.object({
   medicalServices: z.number().min(0).max(1000000),
   professionalServices: z.number().min(0).max(1000000),
   rentalProperties: z.number().min(0).max(1000000),
-  essaludContributions: z.number().min(0).max(1000000)
+  essaludContributions: z.number().min(0).max(1000000),
+  // Nuevos campos para ingresos adicionales
+  gratificaciones: z.number().min(0).max(1000000),
+  bonificaciones: z.number().min(0).max(1000000),
+  utilidades: z.number().min(0).max(1000000),
+  cts: z.number().min(0).max(1000000),
+  asignacionFamiliar: z.number().min(0).max(1000000),
+  // Campos para configuración de meses
+  gratificacionesMonth: z.number().min(1).max(12).optional(),
+  bonificacionesMonth: z.number().min(1).max(12).optional(),
+  utilidadesMonth: z.number().min(1).max(12).optional(),
+  ctsMonth: z.number().min(1).max(12).optional(),
+  // Campos para configuración de cálculos automáticos
+  calculateGratificaciones: z.boolean(),
+  calculateCTS: z.boolean(),
+  calculateAsignacionFamiliar: z.boolean(),
+  // Campos para gratificaciones
+  insuranceType: z.enum(['essalud', 'eps']),
+  startWorkMonth: z.number().min(1).max(12),
+  // Campos para asignación familiar
+  hasChildren: z.boolean(),
+  childrenCount: z.number().min(0).max(10),
+  childrenStudying: z.boolean()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -53,6 +75,7 @@ export default function SunatCalculatorPage() {
   const [result, setResult] = useState<SunatCalculationResult | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
   const [showDeductibleExpenses, setShowDeductibleExpenses] = useState(false);
+  const [showAdditionalIncome, setShowAdditionalIncome] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -68,7 +91,24 @@ export default function SunatCalculatorPage() {
       medicalServices: 0,
       professionalServices: 0,
       rentalProperties: 0,
-      essaludContributions: 0
+      essaludContributions: 0,
+      gratificaciones: 0,
+      bonificaciones: 0,
+      utilidades: 0,
+      cts: 0,
+      asignacionFamiliar: 0,
+      gratificacionesMonth: 12,
+      bonificacionesMonth: 12,
+      utilidadesMonth: 12,
+      ctsMonth: 12,
+      calculateGratificaciones: true,
+      calculateCTS: true,
+      calculateAsignacionFamiliar: true,
+      insuranceType: 'essalud',
+      startWorkMonth: 1,
+      hasChildren: false,
+      childrenCount: 0,
+      childrenStudying: false
     }
   });
 
@@ -97,7 +137,29 @@ export default function SunatCalculatorPage() {
 
       const calculationResult = calculator.calculate({
         ...data,
-        deductibleExpenses
+        deductibleExpenses,
+        // Nuevos campos para ingresos adicionales
+        gratificaciones: data.gratificaciones,
+        bonificaciones: data.bonificaciones,
+        utilidades: data.utilidades,
+        cts: data.cts,
+        asignacionFamiliar: data.asignacionFamiliar,
+        // Campos para configuración de meses
+        gratificacionesMonth: data.gratificacionesMonth,
+        bonificacionesMonth: data.bonificacionesMonth,
+        utilidadesMonth: data.utilidadesMonth,
+        ctsMonth: data.ctsMonth,
+        // Campos para configuración de cálculos automáticos
+        calculateGratificaciones: data.calculateGratificaciones,
+        calculateCTS: data.calculateCTS,
+        calculateAsignacionFamiliar: data.calculateAsignacionFamiliar,
+        // Campos para gratificaciones
+        insuranceType: data.insuranceType,
+        startWorkMonth: data.startWorkMonth,
+        // Campos para asignación familiar
+        hasChildren: data.hasChildren,
+        childrenCount: data.childrenCount,
+        childrenStudying: data.childrenStudying
       });
       setResult(calculationResult);
     } catch (error) {
@@ -371,7 +433,7 @@ export default function SunatCalculatorPage() {
                                     type="number" 
                                     placeholder="0.00" 
                                     step="0.01" 
-                                    className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                    className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-opacity-30"
                                     {...field} 
                                     onChange={(e) => field.onChange(Number(e.target.value))}
                                   />
@@ -392,7 +454,7 @@ export default function SunatCalculatorPage() {
                                     type="number" 
                                     placeholder="0.00" 
                                     step="0.01" 
-                                    className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                    className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-opacity-30"
                                     {...field} 
                                     onChange={(e) => field.onChange(Number(e.target.value))}
                                   />
@@ -413,7 +475,7 @@ export default function SunatCalculatorPage() {
                                     type="number" 
                                     placeholder="0.00" 
                                     step="0.01" 
-                                    className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                    className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-opacity-30"
                                     {...field} 
                                     onChange={(e) => field.onChange(Number(e.target.value))}
                                   />
@@ -434,7 +496,7 @@ export default function SunatCalculatorPage() {
                                     type="number" 
                                     placeholder="0.00" 
                                     step="0.01" 
-                                    className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                    className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-opacity-30"
                                     {...field} 
                                     onChange={(e) => field.onChange(Number(e.target.value))}
                                   />
@@ -452,6 +514,429 @@ export default function SunatCalculatorPage() {
                               </div>
                             </div>
                           )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Additional Income Types Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[#333333] font-medium">Tipos de Ingresos Adicionales</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowAdditionalIncome(!showAdditionalIncome)}
+                          className="text-[#1976D2] border-[#1976D2] hover:bg-[#1976D2] hover:text-white"
+                        >
+                          {showAdditionalIncome ? 'Ocultar' : 'Mostrar'}
+                        </Button>
+                      </div>
+                      
+                      {showAdditionalIncome && (
+                        <div className="space-y-4 p-4 bg-[#F5F5F5] rounded-lg border border-[#E0E0E0]">
+                          <div className="text-sm text-[#666666] mb-3">
+                            <p className="font-medium mb-2">💡 Configuración de ingresos adicionales:</p>
+                            <ul className="space-y-1 text-xs">
+                              <li>• Gratificaciones: Julio y Diciembre por defecto (EsSalud 9%, EPS 6.75%)</li>
+                              <li>• CTS: Mayo y Noviembre por defecto</li>
+                              <li>• Asignación Familiar: S/ 75.00 mensual (si tiene hijos)</li>
+                              <li>• Puedes personalizar los meses de pago</li>
+                            </ul>
+                          </div>
+
+                          {/* Configuración de cálculos automáticos */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="calculateGratificaciones"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <input
+                                      type="checkbox"
+                                      checked={field.value}
+                                      onChange={field.onChange}
+                                      className="h-4 w-4 text-[#1976D2] focus:ring-[#1976D2] border-[#E0E0E0] rounded"
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-sm text-[#333333]">
+                                      Calcular Gratificaciones
+                                    </FormLabel>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="calculateCTS"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <input
+                                      type="checkbox"
+                                      checked={field.value}
+                                      onChange={field.onChange}
+                                      className="h-4 w-4 text-[#1976D2] focus:ring-[#1976D2] border-[#E0E0E0] rounded"
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-sm text-[#333333]">
+                                      Calcular CTS
+                                    </FormLabel>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="calculateAsignacionFamiliar"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <input
+                                      type="checkbox"
+                                      checked={field.value}
+                                      onChange={field.onChange}
+                                      className="h-4 w-4 text-[#1976D2] focus:ring-[#1976D2] border-[#E0E0E0] rounded"
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-sm text-[#333333]">
+                                      Calcular Asignación Familiar
+                                    </FormLabel>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Configuración de gratificaciones */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="insuranceType"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Tipo de Seguro</FormLabel>
+                                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <FormControl>
+                                      <SelectTrigger className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30">
+                                        <SelectValue placeholder="Selecciona el tipo de seguro" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="essalud">EsSalud (9%)</SelectItem>
+                                      <SelectItem value="eps">EPS (6.75%)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="startWorkMonth"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Mes de Inicio de Trabajo</FormLabel>
+                                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                                    <FormControl>
+                                      <SelectTrigger className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30">
+                                        <SelectValue placeholder="Selecciona el mes" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {monthOptions.map((month) => (
+                                        <SelectItem key={month.value} value={month.value}>
+                                          {month.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Configuración de asignación familiar */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="hasChildren"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <input
+                                      type="checkbox"
+                                      checked={field.value}
+                                      onChange={field.onChange}
+                                      className="h-4 w-4 text-[#1976D2] focus:ring-[#1976D2] border-[#E0E0E0] rounded"
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-sm text-[#333333]">
+                                      Tiene Hijos menores de 18 años
+                                    </FormLabel>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="childrenCount"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Número de Hijos</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0" 
+                                      min="0" 
+                                      max="10"
+                                      className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                      {...field} 
+                                      onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="childrenStudying"
+                              render={({ field }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                                  <FormControl>
+                                    <input
+                                      type="checkbox"
+                                      checked={field.value}
+                                      onChange={field.onChange}
+                                      className="h-4 w-4 text-[#1976D2] focus:ring-[#1976D2] border-[#E0E0E0] rounded"
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel className="text-sm text-[#333333]">
+                                      Hijos Estudiando mayores de 18 años
+                                    </FormLabel>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {/* Ingresos adicionales manuales */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="gratificaciones"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Gratificaciones Manuales (S/)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0.00" 
+                                      step="0.01" 
+                                      className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                      {...field} 
+                                      onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                  <FormDescription className="text-xs text-[#666666]">
+                                    Dejar en 0 para cálculo automático
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="gratificacionesMonth"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Mes de Gratificaciones</FormLabel>
+                                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                                    <FormControl>
+                                      <SelectTrigger className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30">
+                                        <SelectValue placeholder="Mes personalizado (opcional)" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {monthOptions.map((month) => (
+                                        <SelectItem key={month.value} value={month.value}>
+                                          {month.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormDescription className="text-xs text-[#666666]">
+                                    Dejar vacío para Julio y Diciembre
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="cts"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">CTS Manual (S/)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0.00" 
+                                      step="0.01" 
+                                      className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                      {...field} 
+                                      onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                  <FormDescription className="text-xs text-[#666666]">
+                                    Dejar en 0 para cálculo automático
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="ctsMonth"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Mes de CTS</FormLabel>
+                                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                                    <FormControl>
+                                      <SelectTrigger className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30">
+                                        <SelectValue placeholder="Mes personalizado (opcional)" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {monthOptions.map((month) => (
+                                        <SelectItem key={month.value} value={month.value}>
+                                          {month.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormDescription className="text-xs text-[#666666]">
+                                    Dejar vacío para Mayo y Noviembre
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="bonificaciones"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Bonificaciones (S/)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0.00" 
+                                      step="0.01" 
+                                      className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                      {...field} 
+                                      onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="bonificacionesMonth"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Mes de Bonificaciones</FormLabel>
+                                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                                    <FormControl>
+                                      <SelectTrigger className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30">
+                                        <SelectValue placeholder="Selecciona el mes" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {monthOptions.map((month) => (
+                                        <SelectItem key={month.value} value={month.value}>
+                                          {month.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="utilidades"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Utilidades (S/)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="0.00" 
+                                      step="0.01" 
+                                      className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                      {...field} 
+                                      onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="utilidadesMonth"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Mes de Utilidades</FormLabel>
+                                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                                    <FormControl>
+                                      <SelectTrigger className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30">
+                                        <SelectValue placeholder="Selecciona el mes" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {monthOptions.map((month) => (
+                                        <SelectItem key={month.value} value={month.value}>
+                                          {month.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>

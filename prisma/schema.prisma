@@ -28,12 +28,19 @@ model Worker {
   name        String   @db.VarChar(255)
   startDate   DateTime @map("start_date")
   startMonth  Int      @map("start_month")
+  // Nuevos campos para gratificaciones y CTS
+  insuranceType String @default("essalud") @map("insurance_type") // essalud, eps
+  hasChildren Boolean @default(false) @map("has_children") // Para asignación familiar
+  childrenCount Int @default(0) @map("children_count") // Número de hijos menores de 18
+  childrenStudying Boolean @default(false) @map("children_studying") // Hijos estudiando después de 18
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
   monthlyIncomes    MonthlyIncome[]
   monthlyRetentions MonthlyRetention[]
+  deductibleExpenses DeductibleExpenses[]
+  additionalIncomeConfig AdditionalIncomeConfig[]
 
   @@map("workers")
 }
@@ -44,6 +51,9 @@ model YearlyConfig {
   uitValue        Decimal  @map("uit_value") @db.Decimal(10, 2)
   deduction7uit   Decimal  @map("deduction_7uit") @db.Decimal(10, 2)
   taxRates        Json     @map("tax_rates")
+  // Nuevos campos para 2025
+  maxAdditionalDeduction Decimal @map("max_additional_deduction") @db.Decimal(10, 2) // 3 UIT para gastos deducibles
+  familyAllowance Decimal @map("family_allowance") @db.Decimal(10, 2) // Asignación familiar (S/ 75.00)
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@map("yearly_config")
@@ -55,10 +65,26 @@ model MonthlyIncome {
   year              Int
   month             Int
   baseSalary        Decimal  @default(0) @map("base_salary") @db.Decimal(10, 2)
+  // Campos existentes
   gratuity          Decimal  @default(0) @db.Decimal(10, 2)
   bonus             Decimal  @default(0) @db.Decimal(10, 2)
   utilities         Decimal  @default(0) @db.Decimal(10, 2)
   otherAdditional   Decimal  @default(0) @map("other_additional") @db.Decimal(10, 2)
+  // Nuevos campos para ingresos adicionales 2025
+  gratificaciones   Decimal  @default(0) @db.Decimal(10, 2)
+  bonificaciones    Decimal  @default(0) @db.Decimal(10, 2)
+  utilidades        Decimal  @default(0) @db.Decimal(10, 2)
+  cts               Decimal  @default(0) @db.Decimal(10, 2) // Compensación por Tiempo de Servicios
+  asignacionFamiliar Decimal @default(0) @map("asignacion_familiar") @db.Decimal(10, 2)
+  // Campos para cálculo automático de gratificaciones
+  gratificacionBase Decimal  @default(0) @map("gratificacion_base") @db.Decimal(10, 2)
+  gratificacionBono Decimal  @default(0) @map("gratificacion_bono") @db.Decimal(10, 2)
+  gratificacionTotal Decimal @default(0) @map("gratificacion_total") @db.Decimal(10, 2)
+  mesesTrabajados   Int      @default(0) @map("meses_trabajados")
+  // Campos para cálculo automático de CTS
+  ctsBase           Decimal  @default(0) @map("cts_base") @db.Decimal(10, 2)
+  ctsDias           Decimal  @default(0) @map("cts_dias") @db.Decimal(10, 2)
+  ctsTotal          Decimal  @default(0) @map("cts_total") @db.Decimal(10, 2)
   totalIncome       Decimal  @map("total_income") @db.Decimal(10, 2)
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
@@ -82,6 +108,9 @@ model MonthlyRetention {
   previousAccumulatedRetention    Decimal  @default(0) @map("previous_accumulated_retention") @db.Decimal(12, 2)
   monthlyRetention                Decimal  @map("monthly_retention") @db.Decimal(10, 2)
   calculationMethod               String   @map("calculation_method") @db.VarChar(20)
+  // Nuevos campos para gastos deducibles
+  deductibleExpensesTotal         Decimal  @default(0) @map("deductible_expenses_total") @db.Decimal(10, 2)
+  deductibleExpensesApplied       Decimal  @default(0) @map("deductible_expenses_applied") @db.Decimal(10, 2)
   createdAt                       DateTime @default(now()) @map("created_at")
 
   // Relations
@@ -89,4 +118,65 @@ model MonthlyRetention {
 
   @@unique([workerId, year, month])
   @@map("monthly_retention")
+}
+
+// Nueva tabla para gastos deducibles
+model DeductibleExpenses {
+  id                Int      @id @default(autoincrement())
+  workerId          Int      @map("worker_id")
+  year              Int
+  month             Int
+  // Categorías de gastos deducibles 2025
+  restaurants       Decimal  @default(0) @db.Decimal(10, 2) // Restaurantes, bares y hoteles (15%)
+  medicalServices   Decimal  @default(0) @map("medical_services") @db.Decimal(10, 2) // Servicios médicos (30%)
+  professionalServices Decimal @default(0) @map("professional_services") @db.Decimal(10, 2) // Servicios profesionales (30%)
+  rentalProperties  Decimal  @default(0) @map("rental_properties") @db.Decimal(10, 2) // Alquiler de inmuebles (30%)
+  essaludContributions Decimal @default(0) @map("essalud_contributions") @db.Decimal(10, 2) // Aportaciones EsSalud (100%)
+  // Totales calculados
+  totalExpenses     Decimal  @map("total_expenses") @db.Decimal(10, 2)
+  totalDeduction    Decimal  @map("total_deduction") @db.Decimal(10, 2)
+  maxDeduction      Decimal  @map("max_deduction") @db.Decimal(10, 2) // 3 UIT
+  remainingDeduction Decimal  @map("remaining_deduction") @db.Decimal(10, 2)
+  // Validaciones
+  isValid           Boolean  @default(true) @map("is_valid")
+  validationErrors  Json     @default("[]") @map("validation_errors") // Array de errores
+  validationWarnings Json    @default("[]") @map("validation_warnings") // Array de advertencias
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  worker Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([workerId, year, month])
+  @@map("deductible_expenses")
+}
+
+// Nueva tabla para configuración de ingresos adicionales
+model AdditionalIncomeConfig {
+  id                Int      @id @default(autoincrement())
+  workerId          Int      @map("worker_id")
+  year              Int
+  // Configuración de meses para ingresos adicionales
+  gratificacionesMonth Int?  @map("gratificaciones_month") // Mes personalizado para gratificaciones
+  bonificacionesMonth  Int?  @map("bonificaciones_month") // Mes para bonificaciones
+  utilidadesMonth      Int?  @map("utilidades_month") // Mes para utilidades
+  ctsMonth             Int?  @map("cts_month") // Mes personalizado para CTS
+  // Montos de ingresos adicionales
+  gratificaciones      Decimal @default(0) @db.Decimal(10, 2)
+  bonificaciones       Decimal @default(0) @db.Decimal(10, 2)
+  utilidades           Decimal @default(0) @db.Decimal(10, 2)
+  cts                  Decimal @default(0) @db.Decimal(10, 2)
+  asignacionFamiliar   Decimal @default(0) @map("asignacion_familiar") @db.Decimal(10, 2)
+  // Configuración de cálculo automático
+  calculateGratificaciones Boolean @default(true) @map("calculate_gratificaciones")
+  calculateCTS         Boolean @default(true) @map("calculate_cts")
+  calculateAsignacionFamiliar Boolean @default(true) @map("calculate_asignacion_familiar")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  worker Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([workerId, year])
+  @@map("additional_income_config")
 }

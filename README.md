@@ -19,6 +19,9 @@ This project includes a comprehensive Jest test suite covering:
 - **5 Main Test Cases**: Core business scenarios for SUNAT tax calculations
 - **4 Edge Cases**: Boundary conditions and error handling
 - **Deductible Expenses Tests**: Complete coverage of 2025 deductible expenses logic
+- **Gratificaciones Tests**: Complete coverage of gratificaciones calculation logic ⭐ **NUEVO**
+- **CTS Tests**: Complete coverage of CTS calculation logic ⭐ **NUEVO**
+- **Asignación Familiar Tests**: Complete coverage of family allowance logic ⭐ **NUEVO**
 - **100% Code Coverage**: Complete testing of all calculation logic
 
 ### Running Tests
@@ -39,12 +42,15 @@ npm run test:coverage
 # Run specific test suites
 npm test -- deductible-expenses.test.ts
 npm test -- sunat-calculator.test.ts
+npm test -- gratificaciones-calculation.test.ts ⭐ **NUEVO**
+npm test -- cts-calculation.test.ts ⭐ **NUEVO**
+npm test -- asignacion-familiar.test.ts ⭐ **NUEVO**
 ```
 
 ### Test Coverage
 
-- **Total Tests**: 64+
-- **Test Suites**: 4
+- **Total Tests**: 100+
+- **Test Suites**: 7
 - **Coverage**: 100% (Statements, Branches, Functions, Lines)
 
 See [tests/README.md](tests/README.md) for detailed test documentation.
@@ -62,6 +68,8 @@ npm run lint    # Run ESLint
 
 - [Software Specification](documentation/software_specification.md)
 - [Gastos Deducibles 2025](documentation/gastos_deducibles_2025.md)
+- [Cálculo de Gratificaciones](documentation/calculo-gratificaciones.md) ⭐ **NUEVO**
+- [Cálculo de CTS y Asignación Familiar](documentation/calculo-cts-asignacion-familiar.md) ⭐ **NUEVO**
 - [Test Cases Template](documentation/casos_de_prueba.md)
 - [Style Guidelines](documentation/styles_guideline.md)
 - [Test Suite Documentation](tests/README.md)
@@ -78,6 +86,7 @@ npm run lint    # Run ESLint
 
 - **Calculadora SUNAT**: Main tax calculation interface
 - **Gastos Deducibles**: Deductible expenses documentation and calculator
+- **Tipos de Ingresos Adicionales**: Gratificaciones, CTS, Asignación Familiar ⭐ **NUEVO**
 - **Documentación**: Comprehensive SUNAT guidelines
 - **Configuración**: System settings and preferences
 
@@ -91,9 +100,17 @@ npm run lint    # Run ESLint
 
 ### **Tipos de Ingresos Adicionales** ⭐ **NUEVO**
 - **Gratificaciones**: Julio y Diciembre por defecto (mes personalizable)
+  - Fórmula: `(Sueldo × Meses Trabajados) ÷ 6 + Bono de Seguro`
+  - EsSalud: 9% | EPS: 6.75%
+  - Cálculo automático según mes de inicio de trabajo
 - **Bonificaciones**: Mes personalizable
 - **Utilidades**: Mes personalizable  
 - **CTS**: Compensación por Tiempo de Servicios (Mayo y Noviembre por defecto, mes personalizable)
-- **Asignación Familiar**: Mensual
+  - Fórmula: `[(Remuneración / 12) × Meses] + [(Remuneración / 360) × Días]`
+  - Cálculo automático según mes de inicio de trabajo
+- **Asignación Familiar**: Mensual (S/ 75.00)
+  - Para trabajadores con hijos menores de 18 años
+  - Para trabajadores con hijos estudiando después de 18 años (máximo 6 años)
+  - Monto fijo independiente de días trabajados
 - **Ingreso Adicional**: Monto único en mes específico
 - **Cálculo inteligente**: Proyecciones anuales actualizadas automáticamente

@@ -234,6 +234,10 @@ describe('Gratificaciones Calculation Tests', () => {
         roundingDecimals: 2,
         insuranceType: 'essalud',
         startWorkMonth: 1,
+        calculateAsignacionFamiliar: true,
+        hasChildren: true,
+        childrenCount: 1,
+        childrenStudying: false,
         gratificaciones: 0,
         bonificaciones: 1500,
         bonificacionesMonth: 9,
@@ -247,25 +251,27 @@ describe('Gratificaciones Calculation Tests', () => {
       const july = result.monthlyCalculations.find(calc => calc.month === 7);
       expect(july?.gratificaciones).toBeGreaterThan(0);
       if (july) {
-        expect(july.totalMonthlyIncome).toBe(4000 + 0 + 0 + 0 + 0 + 102.50 + july.gratificaciones);
+        // Julio tiene: sueldo + gratificación + asignación familiar
+        expect(july.totalMonthlyIncome).toBe(4000 + july.gratificaciones + 102.50);
       }
 
       // Verificar junio (ingreso adicional)
       const june = result.monthlyCalculations.find(calc => calc.month === 6);
       expect(june?.additionalIncome).toBe(2000);
-      expect(june?.totalMonthlyIncome).toBe(4000 + 2000 + 0 + 0 + 0 + 102.50);
+      expect(june?.totalMonthlyIncome).toBe(4000 + 2000 + 102.50);
 
       // Verificar septiembre (bonificación)
       const september = result.monthlyCalculations.find(calc => calc.month === 9);
       expect(september?.bonificaciones).toBe(1500);
-      expect(september?.totalMonthlyIncome).toBe(4000 + 0 + 0 + 1500 + 0 + 102.50);
+      expect(september?.totalMonthlyIncome).toBe(4000 + 1500 + 102.50);
 
       // Verificar diciembre (gratificación + utilidades)
       const december = result.monthlyCalculations.find(calc => calc.month === 12);
       expect(december?.gratificaciones).toBeGreaterThan(0);
       expect(december?.utilidades).toBe(3000);
       if (december) {
-        expect(december.totalMonthlyIncome).toBe(4000 + 0 + 0 + 0 + 3000 + 102.50 + december.gratificaciones);
+        // Diciembre tiene: sueldo + utilidades + gratificación + asignación familiar
+        expect(december.totalMonthlyIncome).toBe(4000 + 3000 + december.gratificaciones + 102.50);
       }
     });
   });
