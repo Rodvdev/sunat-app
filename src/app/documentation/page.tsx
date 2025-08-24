@@ -1,4 +1,4 @@
-import { FileText, Calculator, TrendingUp, Shield, BookOpen, HelpCircle } from 'lucide-react';
+import { Calculator, TrendingUp, Shield, BookOpen, HelpCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const documentationSections = [

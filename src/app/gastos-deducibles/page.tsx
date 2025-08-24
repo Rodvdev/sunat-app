@@ -124,7 +124,7 @@ export default function GastosDeduciblesPage() {
                       <li>• Profesional registrado en SUNAT</li>
                       <li>• Identificación del usuario con DNI o RUC</li>
                       <li>• Para montos ≥ S/ 2,000: medios de pago electrónicos</li>
-                      <li>• Emisor no debe estar "no habido" o de baja en RUC</li>
+                      <li>• Emisor no debe estar &quot;no habido&quot; o de baja en RUC</li>
                     </ul>
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export default function GastosDeduciblesPage() {
                       <li>• Recibo por honorarios electrónico (desde 01.04.2017)</li>
                       <li>• Identificación del usuario con DNI o RUC</li>
                       <li>• Para montos ≥ S/ 2,000: medios de pago electrónicos</li>
-                      <li>• Emisor no debe estar "no habido" o de baja en RUC</li>
+                      <li>• Emisor no debe estar &quot;no habido&quot; o de baja en RUC</li>
                     </ul>
                     <div className="mt-2 p-2 bg-[#FFF3E0] rounded border border-[#FF9800]">
                       <p className="text-xs text-[#E65100] font-medium">Excluidos: Director, síndico, mandatario, gestor, albacea, regidor municipal, consejero regional</p>
@@ -174,7 +174,7 @@ export default function GastosDeduciblesPage() {
                       <li>• Ubicado en Perú</li>
                       <li>• Documentación según tipo de arrendador</li>
                       <li>• Para montos ≥ S/ 2,000: medios de pago electrónicos</li>
-                      <li>• Emisor no debe estar "no habido" o de baja en RUC</li>
+                      <li>• Emisor no debe estar &quot;no habido&quot; o de baja en RUC</li>
                     </ul>
                     <div className="mt-2 p-2 bg-[#E3F2FD] rounded border border-[#2196F3]">
                       <p className="text-xs text-[#1976D2] font-medium">Atribución: Hasta 50% puede trasladarse a cónyuge o concubino</p>
@@ -197,7 +197,7 @@ export default function GastosDeduciblesPage() {
                   <div className="text-sm text-[#666666]">
                     <p className="font-medium mb-2">Requisitos obligatorios:</p>
                     <ul className="space-y-1">
-                      <li>• Inscripción del trabajador en "Registro del Trabajador del Hogar" (MTPE)</li>
+                      <li>• Inscripción del trabajador en &quot;Registro del Trabajador del Hogar&quot; (MTPE)</li>
                       <li>• Derechohabientes registrados en SUNAT Virtual</li>
                       <li>• Formulario N° 1676 (físico o virtual)</li>
                       <li>• Aporte del 9% de la remuneración</li>
@@ -232,7 +232,7 @@ export default function GastosDeduciblesPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="h-4 w-4 text-[#4CAF50] mt-0.5 flex-shrink-0" />
-                    <span><strong>Campo obligatorio:</strong> Debe aparecer en "DNI" o "RUC", NO en observaciones</span>
+                    <span><strong>Campo obligatorio:</strong> Debe aparecer en &quot;DNI&quot; o &quot;RUC&quot;, NO en observaciones</span>
                   </li>
                 </ul>
               </div>

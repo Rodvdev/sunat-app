@@ -239,8 +239,10 @@ export class SunatCalculator {
     // Calcular asignación familiar si corresponde
     let asignacionFamiliarMensual = 0;
     if (calculateAsignacionFamiliar && (hasChildren || childrenStudying)) {
-      // Asignación familiar: S/ 75.00 (10% de la RMLV)
-      asignacionFamiliarMensual = 75.00;
+      // Asignación familiar: S/ 75.00 por hijo (10% de la RMLV)
+      // Se considera el número de hijos menores de 18 años o estudiando
+      const hijosElegibles = Math.max(childrenCount, hasChildren ? 1 : 0);
+      asignacionFamiliarMensual = 75.00 * hijosElegibles;
     }
 
     // Calculate total projected annual income including all additional income types

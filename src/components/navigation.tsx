@@ -34,7 +34,7 @@ export function Navigation() {
           </div>
           
           <div className="hidden sm:ml-6 sm:flex sm:space-x-0">
-            {navigation.map((item, index) => {
+            {navigation.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <div key={item.name} className="relative">

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calculator, FileText, TrendingUp, Shield, Zap, Users, Receipt } from 'lucide-react';
+import { Calculator, FileText, TrendingUp, Shield, Zap, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 

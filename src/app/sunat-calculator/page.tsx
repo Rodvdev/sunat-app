@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Calculator, FileText, TrendingUp, Receipt, AlertTriangle } from 'lucide-react';
+import { Calculator, FileText, TrendingUp, Receipt } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -41,6 +41,7 @@ const formSchema = z.object({
   bonificacionesMonth: z.number().min(1).max(12).optional(),
   utilidadesMonth: z.number().min(1).max(12).optional(),
   ctsMonth: z.number().min(1).max(12).optional(),
+  asignacionFamiliarMonth: z.number().min(0).max(12).optional(),
   // Campos para configuración de cálculos automáticos
   calculateGratificaciones: z.boolean(),
   calculateCTS: z.boolean(),
@@ -101,6 +102,7 @@ export default function SunatCalculatorPage() {
       bonificacionesMonth: 12,
       utilidadesMonth: 12,
       ctsMonth: 12,
+      asignacionFamiliarMonth: 0,
       calculateGratificaciones: true,
       calculateCTS: true,
       calculateAsignacionFamiliar: true,
@@ -135,6 +137,31 @@ export default function SunatCalculatorPage() {
         return;
       }
 
+      // Validaciones adicionales
+      if (data.calculateGratificaciones && data.startWorkMonth > 7) {
+        alert('Si calculas gratificaciones automáticamente, el mes de inicio debe ser antes de Julio para recibir gratificaciones en Julio.');
+        setIsCalculating(false);
+        return;
+      }
+
+      if (data.calculateCTS && data.startWorkMonth > 5) {
+        alert('Si calculas CTS automáticamente, el mes de inicio debe ser antes de Mayo para recibir CTS en Mayo.');
+        setIsCalculating(false);
+        return;
+      }
+
+      if (data.calculateAsignacionFamiliar && !data.hasChildren && !data.childrenStudying) {
+        alert('Para calcular asignación familiar automáticamente, debes tener hijos menores de 18 años o hijos estudiando.');
+        setIsCalculating(false);
+        return;
+      }
+
+      if (data.calculateAsignacionFamiliar && data.hasChildren && data.childrenCount === 0) {
+        alert('Si tienes hijos menores de 18 años, debes especificar el número de hijos.');
+        setIsCalculating(false);
+        return;
+      }
+
       const calculationResult = calculator.calculate({
         ...data,
         deductibleExpenses,
@@ -149,6 +176,7 @@ export default function SunatCalculatorPage() {
         bonificacionesMonth: data.bonificacionesMonth,
         utilidadesMonth: data.utilidadesMonth,
         ctsMonth: data.ctsMonth,
+        asignacionFamiliarMonth: data.asignacionFamiliarMonth,
         // Campos para configuración de cálculos automáticos
         calculateGratificaciones: data.calculateGratificaciones,
         calculateCTS: data.calculateCTS,
@@ -233,7 +261,7 @@ export default function SunatCalculatorPage() {
                       name="monthlyIncome"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-[#333333] font-medium">Ingreso Mensual (S/)</FormLabel>
+                          <FormLabel className="text-[#333333] font-medium">Ingreso Mensual (S/&quot;)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -257,7 +285,7 @@ export default function SunatCalculatorPage() {
                       name="additionalIncome"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-[#333333] font-medium">Ingreso Adicional (S/)</FormLabel>
+                          <FormLabel className="text-[#333333] font-medium">Ingreso Adicional (S/&quot;)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -331,7 +359,7 @@ export default function SunatCalculatorPage() {
                       name="previousRetentions"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-[#333333] font-medium">Retenciones Previas (S/)</FormLabel>
+                          <FormLabel className="text-[#333333] font-medium">Retenciones Previas (S/&quot;)</FormLabel>
                           <FormControl>
                             <Input 
                               type="number" 
@@ -518,7 +546,7 @@ export default function SunatCalculatorPage() {
                       )}
                     </div>
 
-                    {/* Additional Income Types Section */}
+                    {/* Additional Income Types Section - Always Visible */}
                     <div className="space-y-4">
                       <div className="flex items-center justify-between">
                         <Label className="text-[#333333] font-medium">Tipos de Ingresos Adicionales</Label>
@@ -529,21 +557,20 @@ export default function SunatCalculatorPage() {
                           onClick={() => setShowAdditionalIncome(!showAdditionalIncome)}
                           className="text-[#1976D2] border-[#1976D2] hover:bg-[#1976D2] hover:text-white"
                         >
-                          {showAdditionalIncome ? 'Ocultar' : 'Mostrar'}
+                          {showAdditionalIncome ? 'Ocultar Detalles' : 'Mostrar Detalles'}
                         </Button>
                       </div>
                       
-                      {showAdditionalIncome && (
-                        <div className="space-y-4 p-4 bg-[#F5F5F5] rounded-lg border border-[#E0E0E0]">
-                          <div className="text-sm text-[#666666] mb-3">
-                            <p className="font-medium mb-2">💡 Configuración de ingresos adicionales:</p>
-                            <ul className="space-y-1 text-xs">
-                              <li>• Gratificaciones: Julio y Diciembre por defecto (EsSalud 9%, EPS 6.75%)</li>
-                              <li>• CTS: Mayo y Noviembre por defecto</li>
-                              <li>• Asignación Familiar: S/ 75.00 mensual (si tiene hijos)</li>
-                              <li>• Puedes personalizar los meses de pago</li>
-                            </ul>
-                          </div>
+                      <div className="space-y-4 p-4 bg-[#F5F5F5] rounded-lg border border-[#E0E0E0]">
+                        <div className="text-sm text-[#666666] mb-3">
+                          <p className="font-medium mb-2">💡 Configuración de ingresos adicionales:</p>
+                          <ul className="space-y-1 text-xs">
+                            <li>• Gratificaciones: Julio y Diciembre por defecto (EsSalud 9%, EPS 6.75%)</li>
+                            <li>• CTS: Mayo y Noviembre por defecto</li>
+                            <li>• Asignación Familiar: S/ 75.00 por hijo menor de 18 años o estudiando</li>
+                            <li>• Puedes personalizar los meses de pago</li>
+                          </ul>
+                        </div>
 
                           {/* Configuración de cálculos automáticos */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -705,6 +732,9 @@ export default function SunatCalculatorPage() {
                                       onChange={(e) => field.onChange(Number(e.target.value))}
                                     />
                                   </FormControl>
+                                  <FormDescription className="text-xs text-[#666666]">
+                                    S/ 75.00 por hijo menor de 18 años o estudiando
+                                  </FormDescription>
                                   <FormMessage />
                                 </FormItem>
                               )}
@@ -740,7 +770,7 @@ export default function SunatCalculatorPage() {
                               name="gratificaciones"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-sm text-[#333333]">Gratificaciones Manuales (S/)</FormLabel>
+                                  <FormLabel className="text-sm text-[#333333]">Gratificaciones Manuales (S/&quot;)</FormLabel>
                                   <FormControl>
                                     <Input 
                                       type="number" 
@@ -794,7 +824,7 @@ export default function SunatCalculatorPage() {
                               name="cts"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-sm text-[#333333]">CTS Manual (S/)</FormLabel>
+                                  <FormLabel className="text-sm text-[#333333]">CTS Manual (S/&quot;)</FormLabel>
                                   <FormControl>
                                     <Input 
                                       type="number" 
@@ -848,7 +878,7 @@ export default function SunatCalculatorPage() {
                               name="bonificaciones"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-sm text-[#333333]">Bonificaciones (S/)</FormLabel>
+                                  <FormLabel className="text-sm text-[#333333]">Bonificaciones (S/&quot;)</FormLabel>
                                   <FormControl>
                                     <Input 
                                       type="number" 
@@ -896,7 +926,7 @@ export default function SunatCalculatorPage() {
                               name="utilidades"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel className="text-sm text-[#333333]">Utilidades (S/)</FormLabel>
+                                  <FormLabel className="text-sm text-[#333333]">Utilidades (S/&quot;)</FormLabel>
                                   <FormControl>
                                     <Input 
                                       type="number" 
@@ -937,9 +967,65 @@ export default function SunatCalculatorPage() {
                               )}
                             />
                           </div>
+
+                          {/* Campo para asignación familiar personalizada */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <FormField
+                              control={form.control}
+                              name="asignacionFamiliar"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Asignación Familiar Personalizada (S/&quot;)</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      type="number" 
+                                      placeholder="75.00" 
+                                      step="0.01" 
+                                      className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
+                                      {...field} 
+                                      onChange={(e) => field.onChange(Number(e.target.value))}
+                                    />
+                                  </FormControl>
+                                  <FormDescription className="text-xs text-[#666666]">
+                                    Dejar en 0 para usar valor por defecto (S/ 75.00)
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="asignacionFamiliarMonth"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel className="text-sm text-[#333333]">Mes de Asignación Familiar</FormLabel>
+                                  <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={field.value?.toString()}>
+                                    <FormControl>
+                                      <SelectTrigger className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30">
+                                        <SelectValue placeholder="Todos los meses (por defecto)" />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      <SelectItem value="0">Todos los meses</SelectItem>
+                                      {monthOptions.map((month) => (
+                                        <SelectItem key={month.value} value={month.value}>
+                                          {month.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormDescription className="text-xs text-[#666666]">
+                                    Por defecto se paga todos los meses
+                                  </FormDescription>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    
 
                     <Button type="submit" className="w-full bg-[#B71C1C] hover:bg-[#C62828] border-0" disabled={isCalculating}>
                       {isCalculating ? 'Calculando...' : 'Calcular Retenciones'}
@@ -965,6 +1051,19 @@ export default function SunatCalculatorPage() {
                     <CardContent>
                       <div className="text-2xl font-bold text-[#2E7D32]">
                         {formatCurrency(result.summary.totalAnnualIncome)}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-[#E0E0E0] shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-sm font-medium text-[#666666]">
+                        Ingresos Adicionales Totales
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-[#FF9800]">
+                        {formatCurrency(result.summary.totalAdditionalIncome)}
                       </div>
                     </CardContent>
                   </Card>
@@ -1008,6 +1107,86 @@ export default function SunatCalculatorPage() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Additional Income Details */}
+                {(result.summary.totalGratificaciones > 0 || result.summary.totalCTS > 0 || result.summary.totalAsignacionFamiliar > 0) && (
+                  <Card className="border-[#E0E0E0] shadow-sm">
+                    <CardHeader className="bg-[#FFF3E0]">
+                      <CardTitle className="flex items-center gap-2 text-[#FF9800]">
+                        <TrendingUp className="h-5 w-5" />
+                        Resumen de Ingresos Adicionales
+                      </CardTitle>
+                      <CardDescription className="text-[#FF9800]">
+                        Desglose de gratificaciones, CTS y asignación familiar
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {/* Gratificaciones */}
+                        {result.summary.totalGratificaciones > 0 && (
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-[#333333] mb-3">Gratificaciones</h4>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm text-[#666666]">Total Anual:</span>
+                                <span className="font-semibold text-[#FF9800]">{formatCurrency(result.summary.totalGratificaciones)}</span>
+                              </div>
+                              {result.summary.gratificacionesCalculadas.julio && (
+                                <div className="text-xs text-[#666666] pl-2">
+                                  Julio: {formatCurrency(result.summary.gratificacionesCalculadas.julio.totalGratificacion)}
+                                </div>
+                              )}
+                              {result.summary.gratificacionesCalculadas.diciembre && (
+                                <div className="text-xs text-[#666666] pl-2">
+                                  Diciembre: {formatCurrency(result.summary.gratificacionesCalculadas.diciembre.totalGratificacion)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* CTS */}
+                        {result.summary.totalCTS > 0 && (
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-[#333333] mb-3">CTS</h4>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm text-[#666666]">Total Anual:</span>
+                                <span className="font-semibold text-[#FF9800]">{formatCurrency(result.summary.totalCTS)}</span>
+                              </div>
+                              {result.summary.ctsCalculadas.mayo && (
+                                <div className="text-xs text-[#666666] pl-2">
+                                  Mayo: {formatCurrency(result.summary.ctsCalculadas.mayo.total)}
+                                </div>
+                              )}
+                              {result.summary.ctsCalculadas.noviembre && (
+                                <div className="text-xs text-[#666666] pl-2">
+                                  Noviembre: {formatCurrency(result.summary.ctsCalculadas.noviembre.total)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Asignación Familiar */}
+                        {result.summary.totalAsignacionFamiliar > 0 && (
+                          <div className="space-y-3">
+                            <h4 className="font-medium text-[#333333] mb-3">Asignación Familiar</h4>
+                            <div className="space-y-2">
+                              <div className="flex justify-between">
+                                <span className="text-sm text-[#666666]">Total Anual:</span>
+                                <span className="font-semibold text-[#FF9800]">{formatCurrency(result.summary.totalAsignacionFamiliar)}</span>
+                              </div>
+                              <div className="text-xs text-[#666666] pl-2">
+                                Mensual: {formatCurrency(result.summary.totalAsignacionFamiliar / 12)}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Deductible Expenses Summary */}
                 {result.summary.deductibleExpenses.totalExpenses > 0 && (
@@ -1086,10 +1265,13 @@ export default function SunatCalculatorPage() {
                         <thead>
                           <tr className="border-b border-[#E0E0E0]">
                             <th className="text-left py-2 px-2 text-[#333333] font-medium">Mes</th>
-                            <th className="text-right py-2 px-2 text-[#333333] font-medium">Ingreso</th>
+                            <th className="text-right py-2 px-2 text-[#333333] font-medium">Ingreso Base</th>
                             <th className="text-right py-2 px-2 text-[#333333] font-medium">Adicional</th>
+                            <th className="text-right py-2 px-2 text-[#333333] font-medium">Gratificaciones</th>
+                            <th className="text-right py-2 px-2 text-[#333333] font-medium">CTS</th>
+                            <th className="text-right py-2 px-2 text-[#333333] font-medium">Asignación</th>
+                            <th className="text-right py-2 px-2 text-[#333333] font-medium">Total Mes</th>
                             <th className="text-right py-2 px-2 text-[#333333] font-medium">Retención</th>
-                            <th className="text-right py-2 px-2 text-[#333333] font-medium">Acumulado</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1100,11 +1282,20 @@ export default function SunatCalculatorPage() {
                               <td className="py-2 px-2 text-right text-[#666666]">
                                 {month.additionalIncome > 0 ? formatCurrency(month.additionalIncome) : '-'}
                               </td>
+                              <td className="py-2 px-2 text-right text-[#FF9800]">
+                                {month.gratificaciones > 0 ? formatCurrency(month.gratificaciones) : '-'}
+                              </td>
+                              <td className="py-2 px-2 text-right text-[#FF9800]">
+                                {month.cts > 0 ? formatCurrency(month.cts) : '-'}
+                              </td>
+                              <td className="py-2 px-2 text-right text-[#FF9800]">
+                                {month.asignacionFamiliar > 0 ? formatCurrency(month.asignacionFamiliar) : '-'}
+                              </td>
+                              <td className="py-2 px-2 text-right font-semibold text-[#2E7D32]">
+                                {formatCurrency(month.totalMonthlyIncome)}
+                              </td>
                               <td className="py-2 px-2 text-right font-semibold text-[#004C97]">
                                 {formatCurrency(month.monthlyRetention)}
-                              </td>
-                              <td className="py-2 px-2 text-right text-[#666666]">
-                                {formatCurrency(month.expectedAccumulatedRetention)}
                               </td>
                             </tr>
                           ))}
