@@ -129,6 +129,7 @@ export class SunatCalculator {
   private readonly UIT_2025 = 5350; // UIT 2025 - Actualizado por MEF (Decreto Supremo Nº 260-2024-EF)
   private readonly DEDUCTION_7_UIT = 7 * this.UIT_2025;
   private readonly MAX_ADDITIONAL_DEDUCTION = 3 * this.UIT_2025; // Máximo 3 UIT para gastos deducibles
+  private readonly ASIGNACION_FAMILIAR_2025 = 75.00; // Asignación familiar 2025 (10% de RMLV)
   
   // Tax brackets for 2025 (simplified - should be updated with actual rates)
   private readonly TAX_BRACKETS = [
@@ -222,6 +223,55 @@ export class SunatCalculator {
     };
   }
 
+  /**
+   * Calcula el total de gratificaciones anuales
+   */
+  private calculateTotalGratificaciones(
+    monthlyIncome: number, 
+    insuranceType: 'essalud' | 'eps' = 'essalud',
+    startWorkMonth: number = 1
+  ): number {
+    let total = 0;
+    
+    // Gratificación de Julio (mes 7)
+    if (7 >= startWorkMonth) {
+      const gratificacionJulio = this.calculateGratificacion(7, monthlyIncome, insuranceType, startWorkMonth);
+      total += gratificacionJulio.total;
+    }
+    
+    // Gratificación de Diciembre (mes 12)
+    if (12 >= startWorkMonth) {
+      const gratificacionDiciembre = this.calculateGratificacion(12, monthlyIncome, insuranceType, startWorkMonth);
+      total += gratificacionDiciembre.total;
+    }
+    
+    return total;
+  }
+
+  /**
+   * Calcula el total de CTS anual
+   */
+  private calculateTotalCTS(
+    monthlyIncome: number,
+    startWorkMonth: number = 1
+  ): number {
+    let total = 0;
+    
+    // CTS de Mayo (mes 5)
+    if (5 >= startWorkMonth) {
+      const ctsMayo = this.calculateCTS(5, monthlyIncome, startWorkMonth);
+      total += ctsMayo.total;
+    }
+    
+    // CTS de Noviembre (mes 11)
+    if (11 >= startWorkMonth) {
+      const ctsNoviembre = this.calculateCTS(11, monthlyIncome, startWorkMonth);
+      total += ctsNoviembre.total;
+    }
+    
+    return total;
+  }
+
   calculate(params: SunatCalculationParams): SunatCalculationResult {
     const monthlyCalculations: MonthlyCalculation[] = [];
     let accumulatedRetention = params.previousRetentions;
@@ -237,76 +287,29 @@ export class SunatCalculator {
     const childrenStudying = params.childrenStudying || false;
 
     // Calcular asignación familiar si corresponde
-    let asignacionFamiliarMensual = 0;
+    let asignacionFamiliar = 0;
     if (calculateAsignacionFamiliar && (hasChildren || childrenStudying)) {
-      // Asignación familiar: S/ 75.00 por hijo (10% de la RMLV)
-      // Se considera el número de hijos menores de 18 años o estudiando
-      const hijosElegibles = Math.max(childrenCount, hasChildren ? 1 : 0);
-      asignacionFamiliarMensual = 75.00 * hijosElegibles;
+      if (hasChildren && childrenCount > 0) {
+        asignacionFamiliar = this.ASIGNACION_FAMILIAR_2025;
+      } else if (childrenStudying) {
+        asignacionFamiliar = this.ASIGNACION_FAMILIAR_2025;
+      }
     }
 
-    // Calculate total projected annual income including all additional income types
-    let totalProjectedAnnualIncome = params.monthlyIncome * 12;
-    
-    // Add additional income (single month)
-    totalProjectedAnnualIncome += params.additionalIncome || 0;
-    
-    // Add gratificaciones (July and December by default, or custom month)
-    if (params.gratificacionesMonth) {
-      totalProjectedAnnualIncome += params.gratificaciones || 0;
-    } else if (calculateGratificaciones) {
-      // Calcular gratificaciones reales para julio y diciembre
-      // Solo si el trabajador ya estaba trabajando en esos meses
-      let gratificacionJulio = 0;
-      let gratificacionDiciembre = 0;
-      
-      if (7 >= startWorkMonth) {
-        const gratificacionJulioCalc = this.calculateGratificacion(7, params.monthlyIncome, insuranceType, startWorkMonth);
-        gratificacionJulio = gratificacionJulioCalc.total;
-      }
-      
-      if (12 >= startWorkMonth) {
-        const gratificacionDiciembreCalc = this.calculateGratificacion(12, params.monthlyIncome, insuranceType, startWorkMonth);
-        gratificacionDiciembre = gratificacionDiciembreCalc.total;
-      }
-      
-      totalProjectedAnnualIncome += gratificacionJulio + gratificacionDiciembre;
-    }
-    
-    // Add bonificaciones (custom month)
-    totalProjectedAnnualIncome += params.bonificaciones || 0;
-    
-    // Add utilidades (custom month)
-    totalProjectedAnnualIncome += params.utilidades || 0;
-    
-    // Add CTS (May and November by default, or custom month)
-    if (params.ctsMonth) {
-      totalProjectedAnnualIncome += params.cts || 0;
-    } else if (calculateCTS) {
-      // Calcular CTS real para mayo y noviembre
-      let ctsMayo = 0;
-      let ctsNoviembre = 0;
-      
-      if (5 >= startWorkMonth) {
-        const ctsMayoCalc = this.calculateCTS(5, params.monthlyIncome, startWorkMonth);
-        ctsMayo = ctsMayoCalc.total;
-      }
-      
-      if (11 >= startWorkMonth) {
-        const ctsNoviembreCalc = this.calculateCTS(11, params.monthlyIncome, startWorkMonth);
-        ctsNoviembre = ctsNoviembreCalc.total;
-      }
-      
-      totalProjectedAnnualIncome += ctsMayo + ctsNoviembre;
-    }
-    
-    // Add asignación familiar (monthly)
-    // Si se especifica un valor personalizado, usarlo; si no, usar el valor por defecto
-    const asignacionFamiliarAnual = calculateAsignacionFamiliar ? (params.asignacionFamiliar || asignacionFamiliarMensual) * 12 : 0;
-    totalProjectedAnnualIncome += asignacionFamiliarAnual;
+    // Calcular ingresos totales anuales proyectados para determinar si aplican gastos deducibles
+    const totalProjectedAnnualIncome = (params.monthlyIncome * 12) + 
+      (params.additionalIncome * params.additionalMonth) +
+      (calculateGratificaciones ? this.calculateTotalGratificaciones(params.monthlyIncome, insuranceType, startWorkMonth) : 0) +
+      (calculateCTS ? this.calculateTotalCTS(params.monthlyIncome, startWorkMonth) : 0) +
+      (calculateAsignacionFamiliar ? (asignacionFamiliar * 12) : 0);
 
-    // Calculate deductible expenses if provided
-    const deductibleExpensesSummary = this.calculateDeductibleExpenses(params.deductibleExpenses);
+    // Los gastos deducibles solo aplican si los ingresos anuales superan 7 UIT (S/ 37,450)
+    const qualifiesForDeductibleExpenses = totalProjectedAnnualIncome > this.DEDUCTION_7_UIT;
+    
+    // Calcular gastos deducibles solo si califica
+    const deductibleExpensesSummary = qualifiesForDeductibleExpenses 
+      ? this.calculateDeductibleExpenses(params.deductibleExpenses)
+      : this.getEmptyDeductibleExpensesSummary();
 
     // Calculate for each month from calculation month to December
     for (let month = params.calculationMonth; month <= 12; month++) {
@@ -377,10 +380,10 @@ export class SunatCalculator {
       
       // Calculate Asignación Familiar (mensual)
       // Si se especifica un valor personalizado, usarlo; si no, usar el valor por defecto
-      const asignacionFamiliar = calculateAsignacionFamiliar ? (params.asignacionFamiliar || asignacionFamiliarMensual) : 0;
+      const asignacionFamiliarMensual = calculateAsignacionFamiliar ? (params.asignacionFamiliar || asignacionFamiliar) : 0;
       
       // Total monthly income
-      const totalMonthlyIncome = monthlyIncome + additionalIncome + gratificaciones + bonificaciones + utilidades + cts + asignacionFamiliar;
+      const totalMonthlyIncome = monthlyIncome + additionalIncome + gratificaciones + bonificaciones + utilidades + cts + asignacionFamiliarMensual;
       
       // Projected net income (after 7 UIT deduction and deductible expenses)
       const projectedNetIncome = Math.max(0, totalProjectedAnnualIncome - this.DEDUCTION_7_UIT - deductibleExpensesSummary.totalDeduction);
@@ -404,7 +407,7 @@ export class SunatCalculator {
       if (bonificaciones > 0) observations.push('Bonificación');
       if (utilidades > 0) observations.push('Utilidades');
       if (cts > 0) observations.push('CTS');
-      if (asignacionFamiliar > 0) observations.push('Asignación Familiar');
+      if (asignacionFamiliarMensual > 0) observations.push('Asignación Familiar');
 
       const calculation: MonthlyCalculation = {
         month,
@@ -415,7 +418,7 @@ export class SunatCalculator {
         bonificaciones,
         utilidades,
         cts,
-        asignacionFamiliar,
+        asignacionFamiliar: asignacionFamiliarMensual,
         totalMonthlyIncome,
         projectedAccumulatedIncome: totalProjectedAnnualIncome,
         projectedNetIncome,
@@ -538,8 +541,8 @@ export class SunatCalculator {
         totalBonificaciones: params.bonificaciones || 0,
         totalUtilidades: params.utilidades || 0,
         totalCTS,
-        totalAsignacionFamiliar: asignacionFamiliarAnual,
-        totalAdditionalIncome: (params.additionalIncome || 0) + totalGratificaciones + (params.bonificaciones || 0) + (params.utilidades || 0) + totalCTS + asignacionFamiliarAnual,
+        totalAsignacionFamiliar: asignacionFamiliar,
+        totalAdditionalIncome: (params.additionalIncome || 0) + totalGratificaciones + (params.bonificaciones || 0) + (params.utilidades || 0) + totalCTS + asignacionFamiliar,
         gratificacionesCalculadas,
         ctsCalculadas
       }

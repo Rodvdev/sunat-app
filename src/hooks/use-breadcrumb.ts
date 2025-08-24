@@ -16,6 +16,10 @@ export function useBreadcrumb(): BreadcrumbItem[] {
     '/sunat-calculator': [
       { label: 'Calculadora SUNAT', href: '/sunat-calculator', isActive: true }
     ],
+    '/results': [
+      { label: 'Calculadora SUNAT', href: '/sunat-calculator' },
+      { label: 'Resultados', href: '/results', isActive: true }
+    ],
     '/documentation': [
       { label: 'Documentación', href: '/documentation', isActive: true }
     ],

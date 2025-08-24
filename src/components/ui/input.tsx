@@ -3,6 +3,18 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Clear the value if it's 0 for numeric inputs when focused
+    if (type === "number" && e.target.value === "0") {
+      e.target.value = ""
+    }
+    
+    // Call the original onFocus if it exists
+    if (props.onFocus) {
+      props.onFocus(e)
+    }
+  }
+
   return (
     <input
       type={type}
@@ -13,6 +25,7 @@ function Input({ className, type, ...props }: React.ComponentProps<"input">) {
         "aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
         className
       )}
+      onFocus={handleFocus}
       {...props}
     />
   )
