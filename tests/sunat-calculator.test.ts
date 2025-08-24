@@ -8,18 +8,18 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
   });
 
   describe('Basic Configuration', () => {
-    test('should have correct UIT value for 2024', () => {
-      expect(calculator.getUIT()).toBe(5500);
+    test('should have correct UIT value for 2025', () => {
+      expect(calculator.getUIT()).toBe(5350);
     });
 
     test('should have correct 7 UIT deduction', () => {
-      expect(calculator.getDeduction7UIT()).toBe(38500); // 7 * 5500
+      expect(calculator.getDeduction7UIT()).toBe(37450); // 7 * 5350
     });
   });
 
   describe('Caso 1: Ingreso Bajo (S/ 1,000 mensual)', () => {
     const params: SunatCalculationParams = {
-      year: 2024,
+      year: 2025,
       monthlyIncome: 1000,
       additionalIncome: 0,
       additionalMonth: 0,
@@ -55,7 +55,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
 
   describe('Caso 2: Ingreso Medio (S/ 5,000 mensual)', () => {
     const params: SunatCalculationParams = {
-      year: 2024,
+      year: 2025,
       monthlyIncome: 5000,
       additionalIncome: 0,
       additionalMonth: 0,
@@ -90,14 +90,14 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
     test('should calculate correct projected net income', () => {
       const result = calculator.calculate(params);
       const firstMonth = result.monthlyCalculations[0];
-      // 60000 - 38500 = 21500
-      expect(firstMonth.projectedNetIncome).toBe(21500);
+      // 60000 - 37450 = 22550
+      expect(firstMonth.projectedNetIncome).toBe(22550);
     });
   });
 
   describe('Caso 3: Ingreso Medio con Adicional en Junio', () => {
     const params: SunatCalculationParams = {
-      year: 2024,
+      year: 2025,
       monthlyIncome: 5000,
       additionalIncome: 10000,
       additionalMonth: 6, // June
@@ -141,7 +141,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
 
   describe('Caso 4: Ingreso Medio con Adicional en Noviembre (Cálculo desde Julio)', () => {
     const params: SunatCalculationParams = {
-      year: 2024,
+      year: 2025,
       monthlyIncome: 5000,
       additionalIncome: 10000,
       additionalMonth: 11, // November
@@ -179,7 +179,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
 
   describe('Caso 5: Ingreso Alto (S/ 15,000 mensual)', () => {
     const params: SunatCalculationParams = {
-      year: 2024,
+      year: 2025,
       monthlyIncome: 15000,
       additionalIncome: 0,
       additionalMonth: 0,
@@ -199,8 +199,8 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
       
       // Should be in higher tax bracket (above 12 UIT)
       const annualIncome = 180000;
-      const netIncome = annualIncome - 38500; // 141500
-      expect(netIncome).toBeGreaterThan(12 * 5500); // 66000
+      const netIncome = annualIncome - 37450; // 141500
+      expect(netIncome).toBeGreaterThan(12 * 5350); // 66000
     });
 
     test('should have significant monthly retentions', () => {
@@ -213,7 +213,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
   describe('Edge Cases', () => {
     describe('Edge Case 1: Zero Income', () => {
       const params: SunatCalculationParams = {
-        year: 2024,
+        year: 2025,
         monthlyIncome: 0,
         additionalIncome: 0,
         additionalMonth: 0,
@@ -239,7 +239,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
 
     describe('Edge Case 2: Very High Income (Above 35 UIT)', () => {
       const params: SunatCalculationParams = {
-        year: 2024,
+        year: 2025,
         monthlyIncome: 50000, // 600,000 annual
         additionalIncome: 0,
         additionalMonth: 0,
@@ -253,8 +253,8 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
         expect(result.summary.totalAnnualIncome).toBe(600000);
         
         // Should be well above 35 UIT threshold
-        const netIncome = 600000 - 38500; // 561500
-        expect(netIncome).toBeGreaterThan(35 * 5500); // 192500
+        const netIncome = 600000 - 37450; // 561500
+        expect(netIncome).toBeGreaterThan(35 * 5350); // 192500
       });
 
       test('should apply highest tax bracket', () => {
@@ -268,7 +268,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
 
     describe('Edge Case 3: Previous Retentions', () => {
       const params: SunatCalculationParams = {
-        year: 2024,
+        year: 2025,
         monthlyIncome: 5000,
         additionalIncome: 0,
         additionalMonth: 0,
@@ -311,7 +311,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
 
     describe('Edge Case 4: Mid-Year Calculation with High Previous Retentions', () => {
       const params: SunatCalculationParams = {
-        year: 2024,
+        year: 2025,
         monthlyIncome: 8000,
         additionalIncome: 0,
         additionalMonth: 0,
@@ -355,7 +355,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
   describe('Rounding and Precision', () => {
     test('should respect rounding decimals parameter', () => {
       const params: SunatCalculationParams = {
-        year: 2024,
+        year: 2025,
         monthlyIncome: 5000,
         additionalIncome: 0,
         additionalMonth: 0,
@@ -379,7 +379,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
   describe('Validation and Error Handling', () => {
     test('should handle invalid month numbers gracefully', () => {
       const params: SunatCalculationParams = {
-        year: 2024,
+        year: 2025,
         monthlyIncome: 5000,
         additionalIncome: 0,
         additionalMonth: 0,
@@ -394,7 +394,7 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
 
     test('should handle negative income gracefully', () => {
       const params: SunatCalculationParams = {
-        year: 2024,
+        year: 2025,
         monthlyIncome: -1000,
         additionalIncome: 0,
         additionalMonth: 0,

@@ -21,7 +21,7 @@ const documentationSections = [
     description: 'Explicación del algoritmo de cálculo de impuestos',
     content: [
       'Se calcula el ingreso anual proyectado',
-      'Se aplica la deducción de 7 UIT (S/ 38,500 para 2024)',
+      'Se aplica la deducción de 7 UIT (S/ 37,450 para 2025)',
       'Se determina la base imponible neta',
       'Se aplican las tasas progresivas por tramos',
       'Se calculan las retenciones mensuales proporcionales',
@@ -30,14 +30,14 @@ const documentationSections = [
   },
   {
     icon: Shield,
-    title: 'Tramos Impositivos 2024',
+    title: 'Tramos Impositivos 2025',
     description: 'Estructura de tasas impositivas vigentes',
     content: [
-      'Hasta 7 UIT (S/ 38,500): 8%',
-      'De 7 a 12 UIT (S/ 38,500 - S/ 66,000): 14%',
-      'De 12 a 20 UIT (S/ 66,000 - S/ 110,000): 17%',
-      'De 20 a 35 UIT (S/ 110,000 - S/ 192,500): 20%',
-      'Más de 35 UIT (S/ 192,500): 30%'
+      'Hasta 7 UIT (S/ 37450): 8%',
+      'De 7 a 12 UIT (S/ 37450 - S/ 64,200): 14%',
+      'De 12 a 20 UIT (S/ 64,200 - S/ 107,000): 17%',
+      'De 20 a 35 UIT (S/ 107,000 - S/ 187,250): 20%',
+      'Más de 35 UIT (S/ 187,250): 30%'
     ]
   },
   {
@@ -45,19 +45,19 @@ const documentationSections = [
     title: 'Conceptos Clave',
     description: 'Definiciones importantes para entender el cálculo',
     content: [
-      'UIT: Unidad Impositiva Tributaria (S/ 5,500 en 2024)',
+      'UIT: Unidad Impositiva Tributaria (S/ 5,350 en 2025)',
       'Base Imponible: Ingreso total menos deducciones',
       'Retención: Pago anticipado del impuesto a la renta',
       'Tasa Progresiva: Porcentaje que aumenta con el ingreso',
-      'Deducción 7 UIT: Exoneración estándar anual'
+      'Deducción 7 UIT: Exoneración estándar anual (S/ 37450)'
     ]
   }
 ];
 
 const faqItems = [
   {
-    question: '¿La calculadora está actualizada para 2024?',
-    answer: 'Sí, utilizamos las tasas impositivas y valores UIT vigentes para el año 2024.'
+    question: '¿La calculadora está actualizada para 2025?',
+    answer: 'Sí, utilizamos las tasas impositivas y valores UIT vigentes para el año 2025.'
   },
   {
     question: '¿Puedo calcular retenciones para años anteriores?',
@@ -75,14 +75,14 @@ const faqItems = [
 
 export default function DocumentationPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#E3F2FD] py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-[#004C97] mb-4">
             Documentación SUNAT
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-[#666666] max-w-3xl mx-auto">
             Aprende cómo funciona nuestra calculadora y entiende los métodos de cálculo de impuestos peruanos
           </p>
         </div>
@@ -90,15 +90,15 @@ export default function DocumentationPage() {
         {/* Documentation Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
           {documentationSections.map((section) => (
-            <Card key={section.title} className="h-full">
+            <Card key={section.title} className="h-full border-[#E0E0E0] shadow-sm hover:shadow-md transition-shadow duration-200">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <section.icon className="h-6 w-6 text-blue-600" />
+                  <div className="p-2 bg-[#E3F2FD] rounded-lg">
+                    <section.icon className="h-6 w-6 text-[#004C97]" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">{section.title}</CardTitle>
-                    <CardDescription className="text-base">
+                    <CardTitle className="text-xl text-[#004C97]">{section.title}</CardTitle>
+                    <CardDescription className="text-base text-[#666666]">
                       {section.description}
                     </CardDescription>
                   </div>
@@ -108,8 +108,8 @@ export default function DocumentationPage() {
                 <ul className="space-y-2">
                   {section.content.map((item, index) => (
                     <li key={index} className="flex items-start space-x-2">
-                      <span className="text-blue-600 font-semibold">•</span>
-                      <span className="text-gray-700">{item}</span>
+                      <span className="text-[#004C97] font-semibold">•</span>
+                      <span className="text-[#333333]">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -121,25 +121,25 @@ export default function DocumentationPage() {
         {/* FAQ Section */}
         <div className="mb-16">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-[#333333] mb-4">
               Preguntas Frecuentes
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-[#666666]">
               Resolvemos las dudas más comunes sobre el cálculo de impuestos
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {faqItems.map((item) => (
-              <Card key={item.question}>
+              <Card key={item.question} className="border-[#E0E0E0] shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-start space-x-2">
-                    <HelpCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <span>{item.question}</span>
+                    <HelpCircle className="h-5 w-5 text-[#004C97] mt-0.5 flex-shrink-0" />
+                    <span className="text-[#333333]">{item.question}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700">{item.answer}</p>
+                  <p className="text-[#666666]">{item.answer}</p>
                 </CardContent>
               </Card>
             ))}
@@ -147,65 +147,65 @@ export default function DocumentationPage() {
         </div>
 
         {/* Additional Resources */}
-        <div className="bg-white rounded-lg p-8">
+        <div className="bg-white rounded-lg p-8 border-[#E0E0E0] shadow-sm">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold text-[#333333] mb-4">
               Recursos Adicionales
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-[#666666]">
               Enlaces útiles para ampliar tu conocimiento sobre impuestos
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="text-center">
+            <Card className="text-center border-[#E0E0E0] shadow-sm">
               <CardContent className="pt-6">
-                <Shield className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Portal SUNAT</h3>
-                <p className="text-gray-600 mb-4">
+                <Shield className="h-12 w-12 text-[#004C97] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2 text-[#333333]">Portal SUNAT</h3>
+                <p className="text-[#666666] mb-4">
                   Accede a la información oficial de la Superintendencia Nacional de Aduanas y de Administración Tributaria
                 </p>
                 <a 
                   href="https://www.sunat.gob.pe" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 font-medium"
+                  className="text-[#1976D2] hover:text-[#004C97] font-medium transition-colors duration-200"
                 >
                   Visitar Portal →
                 </a>
               </CardContent>
             </Card>
             
-            <Card className="text-center">
+            <Card className="text-center border-[#E0E0E0] shadow-sm">
               <CardContent className="pt-6">
-                <BookOpen className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Normativa Fiscal</h3>
-                <p className="text-gray-600 mb-4">
+                <BookOpen className="h-12 w-12 text-[#2E7D32] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2 text-[#333333]">Normativa Fiscal</h3>
+                <p className="text-[#666666] mb-4">
                   Consulta las leyes y reglamentos vigentes sobre impuestos a la renta en Perú
                 </p>
                 <a 
                   href="https://www.gob.pe/institucion/sunat/normas-legales" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-green-600 hover:text-green-800 font-medium"
+                  className="text-[#2E7D32] hover:text-[#1B5E20] font-medium transition-colors duration-200"
                 >
                   Ver Normativa →
                 </a>
               </CardContent>
             </Card>
             
-            <Card className="text-center">
+            <Card className="text-center border-[#E0E0E0] shadow-sm">
               <CardContent className="pt-6">
-                <Calculator className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Calculadora Oficial</h3>
-                <p className="text-gray-600 mb-4">
+                <Calculator className="h-12 w-12 text-[#B71C1C] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2 text-[#333333]">Calculadora Oficial</h3>
+                <p className="text-[#666666] mb-4">
                   Utiliza la calculadora oficial de SUNAT para verificar tus cálculos
                 </p>
                 <a 
                   href="https://www.sunat.gob.pe/descarga/calculo-impuesto-renta.html" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-purple-600 hover:text-purple-800 font-medium"
+                  className="text-[#B71C1C] hover:text-[#C62828] font-medium transition-colors duration-200"
                 >
                   Ir a Calculadora →
                 </a>

@@ -105,8 +105,8 @@
 ## 🛠️ Technical Implementation
 
 ### Calculator Features
-- **UIT 2024**: S/ 5,500
-- **7 UIT Deduction**: S/ 38,500
+- **UIT 2025**: S/ 5,500
+- **7 UIT Deduction**: S/ 37,450
 - **Tax Brackets**: Progressive rates (8% to 30%)
 - **Rounding**: Configurable decimal precision
 - **Month Support**: January (1) to December (12)

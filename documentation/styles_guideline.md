@@ -1,4 +1,4 @@
-# 🎨 Style Guidelines — SUNAT Futuro UI
+# 🎨 Style Guidelines — SUNAT UI
 
 > Lineamientos de diseño para una interfaz digital **modernizada y accesible** inspirada en los colores e identidad de SUNAT.
 
@@ -85,7 +85,7 @@ Basado en la paleta actual de SUNAT, con ajustes para mayor contraste y un look 
 ### Header Modernizado
 ```html
 <header class="bg-[#004C97] text-white flex justify-between p-4">
-  <div class="font-bold text-xl">SUNAT Futuro</div>
+  <div class="font-bold text-xl">SUNAT</div>
   <nav class="flex gap-4">
     <button class="bg-[#B71C1C] hover:bg-[#C62828] px-3 py-2 rounded">Operaciones en Línea</button>
     <button class="hover:text-[#E3F2FD]">Trámites y Consultas</button>
@@ -110,4 +110,3 @@ Tarjeta Informativa
 	4.	Identidad: Mantener la esencia SUNAT (azul/rojo institucional) pero con un look futurista y digital.
 	5.	Responsive: Adaptado para escritorio, tablet y móvil.
 
-    

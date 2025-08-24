@@ -91,8 +91,8 @@ const settingCategories: SettingCategory[] = [
       {
         label: 'Año por defecto',
         type: 'input',
-        placeholder: '2024',
-        defaultValue: '2024'
+        placeholder: '2025',
+        defaultValue: '2025'
       },
       {
         label: 'Mostrar observaciones',
@@ -163,14 +163,14 @@ const settingCategories: SettingCategory[] = [
 
 export default function SettingsPage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-[#E3F2FD] py-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-[#004C97] mb-4">
             Configuración
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-[#666666] max-w-2xl mx-auto">
             Personaliza la aplicación según tus preferencias y necesidades
           </p>
         </div>
@@ -178,15 +178,15 @@ export default function SettingsPage() {
         {/* Settings Categories */}
         <div className="space-y-8">
           {settingCategories.map((category) => (
-            <Card key={category.title}>
+            <Card key={category.title} className="border-[#E0E0E0] shadow-sm">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <category.icon className="h-6 w-6 text-blue-600" />
+                  <div className="p-2 bg-[#E3F2FD] rounded-lg">
+                    <category.icon className="h-6 w-6 text-[#004C97]" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">{category.title}</CardTitle>
-                    <CardDescription className="text-base">
+                    <CardTitle className="text-xl text-[#004C97]">{category.title}</CardTitle>
+                    <CardDescription className="text-base text-[#666666]">
                       {category.description}
                     </CardDescription>
                   </div>
@@ -196,13 +196,13 @@ export default function SettingsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {category.settings.map((setting) => (
                     <div key={setting.label} className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">
+                      <Label className="text-sm font-medium text-[#333333]">
                         {setting.label}
                       </Label>
                       
                       {setting.type === 'select' && (
                         <Select defaultValue={setting.defaultValue}>
-                          <SelectTrigger>
+                          <SelectTrigger className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30">
                             <SelectValue placeholder="Selecciona una opción" />
                           </SelectTrigger>
                           <SelectContent>
@@ -219,6 +219,7 @@ export default function SettingsPage() {
                         <Input 
                           placeholder={setting.placeholder} 
                           defaultValue={setting.defaultValue}
+                          className="border-[#E0E0E0] focus:border-[#1976D2] focus:ring-[#1976D2] focus:ring-opacity-30"
                         />
                       )}
                       
@@ -240,27 +241,27 @@ export default function SettingsPage() {
 
         {/* Save Button */}
         <div className="mt-12 text-center">
-          <Button size="lg" className="px-8 py-3">
+          <Button size="lg" className="px-8 py-3 bg-[#004C97] hover:bg-[#1976D2] border-0">
             <Settings className="mr-2 h-5 w-5" />
             Guardar Configuración
           </Button>
         </div>
 
         {/* Additional Info */}
-        <div className="mt-12 bg-blue-50 rounded-lg p-6">
+        <div className="mt-12 bg-[#E3F2FD] rounded-lg p-6 border border-[#1976D2]">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-blue-900 mb-2">
+            <h3 className="text-lg font-semibold text-[#004C97] mb-2">
               ¿Necesitas ayuda?
             </h3>
-            <p className="text-blue-700 mb-4">
+            <p className="text-[#004C97] mb-4">
               Si tienes problemas con la configuración o necesitas asistencia técnica, 
               consulta nuestra documentación o contacta al soporte.
             </p>
             <div className="flex gap-4 justify-center">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="border-[#004C97] text-[#004C97] hover:bg-[#004C97] hover:text-white">
                 Ver Documentación
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="border-[#B71C1C] text-[#B71C1C] hover:bg-[#B71C1C] hover:text-white">
                 Contactar Soporte
               </Button>
             </div>
