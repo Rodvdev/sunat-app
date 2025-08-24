@@ -1,2 +1,51 @@
-# sunat-app
-software para la SUNAT que me permita calcular el porcentaje de retención de los trabajadores de quinta categoría para el ejercicio actual: - El programa debe mostrar los pagos que se hará al trabajador en forma mensual. - Considerar si el trabajador ingresa a trabajar en cualquier mes del año El programa debe calcular: - Debe permitir ingresar gratificaciones, bonificaciones, utilidades, etc - El impuesto anual proyectado - El monto de retención de todos los meses
+# SUNAT App
+
+A comprehensive application for calculating 5th category income tax according to SUNAT methodology.
+
+## 🧪 Test Suite
+
+This project includes a comprehensive Jest test suite covering:
+
+- **5 Main Test Cases**: Core business scenarios for SUNAT tax calculations
+- **4 Edge Cases**: Boundary conditions and error handling
+- **100% Code Coverage**: Complete testing of all calculation logic
+
+### Running Tests
+
+```bash
+# Install dependencies
+npm install
+
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Test Coverage
+
+- **Total Tests**: 55
+- **Test Suites**: 3
+- **Coverage**: 100% (Statements, Branches, Functions, Lines)
+
+See [tests/README.md](tests/README.md) for detailed test documentation.
+
+## 🚀 Development
+
+```bash
+npm run dev     # Start development server
+npm run build   # Build for production
+npm run start   # Start production server
+npm run lint    # Run ESLint
+```
+
+## 📚 Documentation
+
+- [Software Specification](documentation/software_specification.md)
+- [Test Cases Template](documentation/casos_de_prueba.md)
+- [Style Guidelines](documentation/styles_guideline.md)
+- [Test Suite Documentation](tests/README.md)

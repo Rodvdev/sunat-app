@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("user") // user, admin, auditor
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Worker {
+  id          Int      @id @default(autoincrement())
+  dni         String   @unique @db.VarChar(8)
+  name        String   @db.VarChar(255)
+  startDate   DateTime @map("start_date")
+  startMonth  Int      @map("start_month")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  monthlyIncomes    MonthlyIncome[]
+  monthlyRetentions MonthlyRetention[]
+
+  @@map("workers")
+}
+
+model YearlyConfig {
+  id              Int      @id @default(autoincrement())
+  year            Int      @unique
+  uitValue        Decimal  @map("uit_value") @db.Decimal(10, 2)
+  deduction7uit   Decimal  @map("deduction_7uit") @db.Decimal(10, 2)
+  taxRates        Json     @map("tax_rates")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@map("yearly_config")
+}
+
+model MonthlyIncome {
+  id                Int      @id @default(autoincrement())
+  workerId          Int      @map("worker_id")
+  year              Int
+  month             Int
+  baseSalary        Decimal  @default(0) @map("base_salary") @db.Decimal(10, 2)
+  gratuity          Decimal  @default(0) @db.Decimal(10, 2)
+  bonus             Decimal  @default(0) @db.Decimal(10, 2)
+  utilities         Decimal  @default(0) @db.Decimal(10, 2)
+  otherAdditional   Decimal  @default(0) @map("other_additional") @db.Decimal(10, 2)
+  totalIncome       Decimal  @map("total_income") @db.Decimal(10, 2)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  worker Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([workerId, year, month])
+  @@map("monthly_income")
+}
+
+model MonthlyRetention {
+  id                              Int      @id @default(autoincrement())
+  workerId                        Int      @map("worker_id")
+  year                            Int
+  month                           Int
+  projectedAnnualIncome           Decimal  @map("projected_annual_income") @db.Decimal(12, 2)
+  projectedNetIncome              Decimal  @map("projected_net_income") @db.Decimal(12, 2)
+  projectedTax                    Decimal  @map("projected_tax") @db.Decimal(12, 2)
+  expectedAccumulatedRetention    Decimal  @map("expected_accumulated_retention") @db.Decimal(12, 2)
+  previousAccumulatedRetention    Decimal  @default(0) @map("previous_accumulated_retention") @db.Decimal(12, 2)
+  monthlyRetention                Decimal  @map("monthly_retention") @db.Decimal(10, 2)
+  calculationMethod               String   @map("calculation_method") @db.VarChar(20)
+  createdAt                       DateTime @default(now()) @map("created_at")
+
+  // Relations
+  worker Worker @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([workerId, year, month])
+  @@map("monthly_retention")
+}

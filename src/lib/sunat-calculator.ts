@@ -56,6 +56,9 @@ export class SunatCalculator {
     let accumulatedIncome = 0;
     let accumulatedRetention = params.previousRetentions;
 
+    // Calculate total projected annual income including additional income
+    const totalProjectedAnnualIncome = (params.monthlyIncome * 12) + params.additionalIncome;
+
     // Calculate for each month from calculation month to December
     for (let month = params.calculationMonth; month <= 12; month++) {
       const monthIndex = month - 1;
@@ -65,12 +68,8 @@ export class SunatCalculator {
       const monthlyIncome = params.monthlyIncome;
       const additionalIncome = month === params.additionalMonth ? params.additionalIncome : 0;
       
-      // Project annual income based on remaining months
-      const remainingMonths = 12 - month + 1;
-      const projectedAnnualIncome = (monthlyIncome * 12) + additionalIncome;
-      
-      // Calculate projected net income (after 7 UIT deduction)
-      const projectedNetIncome = Math.max(0, projectedAnnualIncome - this.DEDUCTION_7_UIT);
+      // Projected net income (after 7 UIT deduction)
+      const projectedNetIncome = Math.max(0, totalProjectedAnnualIncome - this.DEDUCTION_7_UIT);
       
       // Calculate projected tax using progressive brackets
       const projectedTax = this.calculateProgressiveTax(projectedNetIncome);
@@ -90,7 +89,7 @@ export class SunatCalculator {
         monthName,
         monthlyIncome,
         additionalIncome,
-        projectedAccumulatedIncome: projectedAnnualIncome,
+        projectedAccumulatedIncome: totalProjectedAnnualIncome,
         projectedNetIncome,
         projectedTax,
         expectedAccumulatedRetention,
@@ -106,7 +105,7 @@ export class SunatCalculator {
     const totalAnnualIncome = params.monthlyIncome * 12 + params.additionalIncome;
     const totalAnnualTax = this.calculateProgressiveTax(Math.max(0, totalAnnualIncome - this.DEDUCTION_7_UIT));
     const totalAnnualRetention = monthlyCalculations.reduce((sum, calc) => sum + calc.monthlyRetention, 0);
-    const averageMonthlyRetention = totalAnnualRetention / monthlyCalculations.length;
+    const averageMonthlyRetention = monthlyCalculations.length > 0 ? totalAnnualRetention / monthlyCalculations.length : 0;
 
     return {
       parameters: params,
