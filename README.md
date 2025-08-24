@@ -1,0 +1,2 @@
+# sunat-app
+software para la SUNAT que me permita calcular el porcentaje de retención de los trabajadores de quinta categoría para el ejercicio actual: - El programa debe mostrar los pagos que se hará al trabajador en forma mensual. - Considerar si el trabajador ingresa a trabajar en cualquier mes del año El programa debe calcular: - Debe permitir ingresar gratificaciones, bonificaciones, utilidades, etc - El impuesto anual proyectado - El monto de retención de todos los meses
