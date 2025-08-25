@@ -1,11 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { SunatCalculationResult } from '@/lib/sunat-calculator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, FileText, Calculator, TrendingDown, Shield } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { useRouter } from 'next/navigation';
 
 interface SunatCalculatorResultsProps {
   result: SunatCalculationResult;
@@ -20,14 +18,12 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
     }).format(amount);
   };
 
-  const router = useRouter();
 
   // Debug: Log complete result object
   console.log('Complete result object received:', result);
   console.log('Summary data:', result.summary);
   console.log('First month calculation:', result.monthlyCalculations[0]);
 
-  const [isMetodologiaExpanded, setIsMetodologiaExpanded] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -573,30 +569,11 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Ret. Ordinaria</th>
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Ret. Adicional</th>
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Total Retención</th>
-                  <th className="text-left py-2 px-2 text-[#333333] font-medium">Metodología</th>
                 </tr>
               </thead>
               <tbody>
-                {result.monthlyCalculations.map((month, index) => {
-                  // Calcular retención ordinaria (total - adicional)
+                {result.monthlyCalculations.map((month) => {
                   const retencionOrdinaria = month.monthlyRetention - (month.additionalMonthlyRetention || 0);
-                  
-                  // Determinar metodología aplicada según el mes
-                  const getMetodologia = (monthNumber: number) => {
-                    if (monthNumber >= 1 && monthNumber <= 3) return "Paso 4: ÷12";
-                    if (monthNumber === 4) return "Paso 4: ÷9";
-                    if (monthNumber >= 5 && monthNumber <= 7) return "Paso 4: ÷8";
-                    if (monthNumber === 8) return "Paso 4: ÷5";
-                    if (monthNumber >= 9 && monthNumber <= 11) return "Paso 4: ÷4";
-                    if (monthNumber === 12) return "Paso 4: Ajuste";
-                    return "";
-                  };
-                  
-                  // Determinar si hay retención adicional (Paso 5)
-                  const hasRetencionAdicional = month.additionalMonthlyRetention > 0;
-                  const metodologiaCompleta = hasRetencionAdicional 
-                    ? `${getMetodologia(month.month)} + Paso 5`
-                    : getMetodologia(month.month);
                   
                   return (
                     <tr key={month.month} className="border-b border-[#E0E0E0] hover:bg-[#E3F2FD] transition-colors duration-200">
@@ -630,18 +607,6 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                       </td>
                       <td className="py-2 px-2 text-right font-bold text-[#B71C1C]">
                         {formatCurrency(month.monthlyRetention)}
-                      </td>
-                      <td className="py-2 px-2 text-left">
-                        <div className="text-xs">
-                          <div className={`font-medium ${hasRetencionAdicional ? 'text-[#F44336]' : 'text-[#9C27B0]'}`}>
-                            {metodologiaCompleta}
-                          </div>
-                          {hasRetencionAdicional && (
-                            <div className="text-[#FF9800] text-xs">
-                              Ingresos extraordinarios
-                            </div>
-                          )}
-                        </div>
                       </td>
                     </tr>
                   );
