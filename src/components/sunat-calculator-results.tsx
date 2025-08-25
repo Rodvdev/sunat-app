@@ -64,6 +64,134 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
         </div>
       </div>
 
+      {/* PASO 2: Donaciones y PASO 3: Créditos Fiscales */}
+      <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
+        <CardHeader className="bg-gradient-to-r from-[#4CAF50] to-[#FF9800] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Metodología SUNAT - Pasos 2 y 3
+          </CardTitle>
+          <CardDescription className="text-white opacity-90">
+            Deducción de 7 UIT, donaciones y aplicación de créditos fiscales
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* PASO 2: Donaciones */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-[#333333] text-lg mb-4 flex items-center gap-2">
+                <span className="bg-[#4CAF50] text-white px-3 py-1 rounded-full text-sm">PASO 2</span>
+                Donaciones (Artículo 49° de la Ley)
+              </h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Deducción 7 UIT</span>
+                  <span className="font-bold text-[#4CAF50]">{formatCurrency(result.summary.deduction7UIT || 7 * 5350)}</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Monto de Donaciones</span>
+                  <span className="font-semibold text-[#4CAF50]">
+                    {formatCurrency(result.summary.donations || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Deducción por Donaciones</span>
+                  <span className="font-semibold text-[#4CAF50]">
+                    {formatCurrency(result.summary.donationsDeduction || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-[#4CAF50] text-white rounded-lg">
+                  <span className="text-sm font-semibold">Ingreso Neto Final</span>
+                  <span className="font-bold text-xl">
+                    {formatCurrency(result.summary.finalNetIncome || result.summary.totalAnnualIncome - (7 * 5350) - result.summary.deductibleExpenses.totalDeduction)}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Información sobre donaciones */}
+              <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
+                <div className="text-sm text-blue-700">
+                  <p className="font-medium mb-2">📋 Información Importante sobre Donaciones:</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• Solo se pueden deducir en diciembre con motivo del ajuste final del impuesto</li>
+                    <li>• Solo aplica para trabajadores que perciben rentas de quinta categoría</li>
+                    <li>• Las donaciones deben estar acreditadas con documentos según el Artículo 21°</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* PASO 3: Créditos Fiscales */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-[#333333] text-lg mb-4 flex items-center gap-2">
+                <span className="bg-[#FF9800] text-white px-3 py-1 rounded-full text-sm">PASO 3</span>
+                Créditos (Artículo 88° de la Ley)
+              </h4>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Impuesto Anual Proyectado</span>
+                  <span className="font-bold text-[#FF9800]">
+                    {formatCurrency(result.summary.projectedAnnualTax || result.summary.totalAnnualTax)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Total de Créditos Aplicables</span>
+                  <span className="font-semibold text-[#FF9800]">
+                    {formatCurrency(result.summary.totalTaxCredits || 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-[#FF9800] text-white rounded-lg">
+                  <span className="text-sm font-semibold">Impuesto Anual Final</span>
+                  <span className="font-bold text-xl">
+                    {formatCurrency(result.summary.finalAnnualTax || result.summary.totalAnnualTax)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Desglose de créditos */}
+              {result.summary.totalTaxCredits > 0 && (
+                <div className="space-y-2">
+                  <h5 className="font-medium text-[#333333] text-sm">Desglose de Créditos:</h5>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#666666]">• Créditos Anteriores:</span>
+                      <span className="font-medium">
+                        {formatCurrency(result.summary.taxCreditsBreakdown?.previousCredits || 0)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#666666]">• Pagos a Cuenta:</span>
+                      <span className="font-medium">
+                        {formatCurrency(result.summary.taxCreditsBreakdown?.previousPayments || 0)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-[#666666]">• Saldos a Favor:</span>
+                      <span className="font-medium">
+                        {formatCurrency(result.summary.taxCreditsBreakdown?.previousRefunds || 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Información sobre créditos */}
+              <div className="bg-orange-50 border-l-4 border-orange-400 p-4">
+                <div className="text-sm text-orange-700">
+                  <p className="font-medium mb-2">💳 Información sobre Créditos:</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• Los créditos se deducen del impuesto anual proyectado</li>
+                    <li>• Solo aplica para trabajadores que perciben rentas de quinta categoría</li>
+                    <li>• Los saldos a favor deben estar reconocidos por SUNAT</li>
+                    <li>• Solo Renta de Quinta Categoría: {result.summary.isOnlyFifthCategoryIncome ? 'Sí' : 'No'}</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Tax Rates and Projected Tax Information */}
       <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
         <CardHeader className="bg-[#B71C1C] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
@@ -127,9 +255,23 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                   <span className="font-bold text-[#1976D2]">{formatCurrency(result.summary.totalAnnualIncome - (7 * 5350) - result.summary.deductibleExpenses.totalDeduction)}</span>
                 </div>
                 <div className="flex justify-between items-center p-4 bg-[#B71C1C] text-white rounded-lg">
-                  <span className="text-sm font-semibold">Impuesto Anual Proyectado</span>
-                  <span className="font-bold text-xl">{formatCurrency(result.summary.totalAnnualTax)}</span>
+                  <span className="text-sm font-semibold">Impuesto Anual Proyectado (Paso 3)</span>
+                  <span className="font-bold text-xl">{formatCurrency(result.summary.projectedAnnualTax || result.summary.totalAnnualTax)}</span>
                 </div>
+                
+                {/* PASO 3: Créditos Fiscales */}
+                {result.summary.totalTaxCredits > 0 && (
+                  <>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <span className="text-sm text-[#666666]">Menos: Total Créditos Aplicables</span>
+                      <span className="font-semibold text-orange-600">- {formatCurrency(result.summary.totalTaxCredits)}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-4 bg-[#FF9800] text-white rounded-lg">
+                      <span className="text-sm font-semibold">= Impuesto Anual Final</span>
+                      <span className="font-bold text-xl">{formatCurrency(result.summary.finalAnnualTax || result.summary.totalAnnualTax)}</span>
+                    </div>
+                  </>
+                )}
               </div>
               
               {/* Tax Rate Applied */}
@@ -443,6 +585,164 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
         </CardContent>
       </Card>
 
+      {/* Resumen de la Metodología SUNAT */}
+      <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
+        <CardHeader className="bg-gradient-to-r from-[#004C97] via-[#1976D2] to-[#42A5F5] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
+          <CardTitle className="flex items-center gap-2">
+            <Calculator className="h-5 w-5" />
+            Resumen de la Metodología SUNAT - 5 Pasos
+          </CardTitle>
+          <CardDescription className="text-white opacity-90">
+            Resumen ejecutivo de todos los pasos aplicados en el cálculo
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Columna Izquierda: Pasos 1-3 */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-[#333333] text-lg mb-4">📊 Cálculo de Base Imponible</h4>
+              
+              {/* PASO 1 */}
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-[#004C97] text-white px-2 py-1 rounded text-xs font-bold">PASO 1</span>
+                  <span className="font-medium text-[#004C97]">RBA Proyectada</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">RBA Total:</span>
+                    <span className="font-semibold">{formatCurrency(result.summary.totalAnnualIncome)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Ingresos Adicionales:</span>
+                    <span className="font-semibold">{formatCurrency(result.summary.totalAdditionalIncome)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* PASO 2 */}
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-[#4CAF50] text-white px-2 py-1 rounded text-xs font-bold">PASO 2</span>
+                  <span className="font-medium text-[#4CAF50]">Deducción 7 UIT</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Deducción 7 UIT:</span>
+                    <span className="font-semibold">- {formatCurrency(7 * 5350)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Donaciones:</span>
+                    <span className="font-semibold">- {formatCurrency(result.summary.donations || 0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Gastos Deducibles:</span>
+                    <span className="font-semibold">- {formatCurrency(result.summary.deductibleExpenses.totalDeduction)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-[#4CAF50]">
+                    <span>Base Imponible:</span>
+                    <span>{formatCurrency(result.summary.finalNetIncome || result.summary.totalAnnualIncome - (7 * 5350) - result.summary.deductibleExpenses.totalDeduction)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* PASO 3 */}
+              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-[#FF9800] text-white px-2 py-1 rounded text-xs font-bold">PASO 3</span>
+                  <span className="font-medium text-[#FF9800]">Impuesto y Créditos</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Impuesto Proyectado:</span>
+                    <span className="font-semibold">{formatCurrency(result.summary.projectedAnnualTax || result.summary.totalAnnualTax)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Créditos Aplicables:</span>
+                    <span className="font-semibold">- {formatCurrency(result.summary.totalTaxCredits || 0)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-[#FF9800]">
+                    <span>Impuesto Final:</span>
+                    <span>{formatCurrency(result.summary.finalAnnualTax || result.summary.totalAnnualTax)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Columna Derecha: Pasos 4-5 */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-[#333333] text-lg mb-4">📅 Distribución de Retenciones</h4>
+              
+              {/* PASO 4 */}
+              <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-[#9C27B0] text-white px-2 py-1 rounded text-xs font-bold">PASO 4</span>
+                  <span className="font-medium text-[#9C27B0]">Fraccionamiento</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Impuesto Anual Final:</span>
+                    <span className="font-semibold">{formatCurrency(result.summary.finalAnnualTax || result.summary.totalAnnualTax)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Retención Mensual Promedio:</span>
+                    <span className="font-semibold">{formatCurrency(result.summary.averageMonthlyRetention)}</span>
+                  </div>
+                  <div className="text-xs text-[#666666] mt-2">
+                    <p><strong>Distribución Progresiva:</strong></p>
+                    <p>Ene-Mar: ÷12 | Abr: ÷9 | May-Jul: ÷8 | Ago: ÷5 | Sep-Nov: ÷4 | Dic: Ajuste</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* PASO 5 */}
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-[#F44336] text-white px-2 py-1 rounded text-xs font-bold">PASO 5</span>
+                  <span className="font-medium text-[#F44336]">Retenciones Adicionales</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Total Retenciones Ordinarias:</span>
+                    <span className="font-semibold">
+                      {formatCurrency(result.monthlyCalculations.reduce((sum, month) => {
+                        const ordinaria = month.monthlyRetention - (month.additionalMonthlyRetention || 0);
+                        return sum + ordinaria;
+                      }, 0))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[#666666]">Total Retenciones Adicionales:</span>
+                    <span className="font-semibold">
+                      {formatCurrency(result.monthlyCalculations.reduce((sum, month) => {
+                        return sum + (month.additionalMonthlyRetention || 0);
+                      }, 0))}
+                    </span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-[#F44336]">
+                    <span>Total Retenciones:</span>
+                    <span>{formatCurrency(result.summary.totalAnnualRetention)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resumen Final */}
+              <div className="p-4 bg-[#004C97] text-white rounded-lg">
+                <h5 className="font-semibold mb-2 text-center">🎯 RESULTADO FINAL</h5>
+                <div className="text-center">
+                  <div className="text-2xl font-bold mb-1">
+                    {formatCurrency(result.summary.totalAnnualRetention)}
+                  </div>
+                  <div className="text-sm opacity-90">
+                    Total de Retenciones Anuales
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Monthly Details */}
       <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
         <CardHeader className="bg-[#004C97] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
@@ -492,21 +792,29 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                   </svg>
                 </div>
                 <div className="text-[#1976D2]">
-                  <h4 className="font-medium mb-2">📋 Metodología SUNAT para Cálculo de Retenciones</h4>
+                  <h4 className="font-medium mb-2">📋 Metodología SUNAT Completa para Cálculo de Retenciones</h4>
                   <div className="text-sm space-y-2">
-                    <p><strong>PASO 4 - Retención Ordinaria:</strong></p>
-                    <ul className="list-disc list-inside ml-4 space-y-1 text-xs">
-                      <li><strong>Enero, Febrero y Marzo:</strong> Impuesto Anual Proyectado ÷ 12</li>
-                      <li><strong>Abril:</strong> (IAP - Retenciones enero-marzo) ÷ 9</li>
-                      <li><strong>Mayo, Junio y Julio:</strong> (IAP - Retenciones enero-abril) ÷ 8</li>
-                      <li><strong>Agosto:</strong> (IAP - Retenciones enero-julio) ÷ 5</li>
-                      <li><strong>Setiembre, Octubre y Noviembre:</strong> (IAP - Retenciones enero-agosto) ÷ 4</li>
-                      <li><strong>Diciembre:</strong> IAP - Retenciones enero-noviembre</li>
-                    </ul>
-                    <p className="mt-2"><strong>PASO 5 - Retención Adicional:</strong> Solo para ingresos extraordinarios (bonificaciones, utilidades, etc.)</p>
-                    <p className="text-xs opacity-75">
-                      <strong>Total Retención = Retención Ordinaria + Retención Adicional</strong>
-                    </p>
+                    <p><strong>PASO 1 - RBA Proyectada:</strong> Cálculo de remuneración bruta anual incluyendo ingresos adicionales</p>
+                    <p><strong>PASO 2 - Deducción 7 UIT:</strong> Aplicación de deducción fija de 7 UIT y donaciones (solo en diciembre)</p>
+                    <p><strong>PASO 3 - Impuesto y Créditos:</strong> Aplicación de tasas progresivas y deducción de créditos del Artículo 88°</p>
+                    <p><strong>PASO 4 - Fraccionamiento:</strong> Distribución del impuesto anual en retenciones mensuales</p>
+                    <p><strong>PASO 5 - Retenciones Adicionales:</strong> Cálculo para ingresos extraordinarios</p>
+                    
+                    <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border border-[#1976D2]">
+                      <p className="font-medium mb-2">PASO 4 - Retención Ordinaria:</p>
+                      <ul className="list-disc list-inside ml-4 space-y-1 text-xs">
+                        <li><strong>Enero, Febrero y Marzo:</strong> Impuesto Anual Final ÷ 12</li>
+                        <li><strong>Abril:</strong> (IAF - Retenciones enero-marzo) ÷ 9</li>
+                        <li><strong>Mayo, Junio y Julio:</strong> (IAF - Retenciones enero-abril) ÷ 8</li>
+                        <li><strong>Agosto:</strong> (IAF - Retenciones enero-julio) ÷ 5</li>
+                        <li><strong>Setiembre, Octubre y Noviembre:</strong> (IAF - Retenciones enero-agosto) ÷ 4</li>
+                        <li><strong>Diciembre:</strong> IAF - Retenciones enero-noviembre</li>
+                      </ul>
+                      <p className="mt-2 text-xs"><strong>PASO 5 - Retención Adicional:</strong> Solo para ingresos extraordinarios (bonificaciones, utilidades, etc.)</p>
+                      <p className="text-xs opacity-75">
+                        <strong>Total Retención = Retención Ordinaria + Retención Adicional</strong>
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -527,6 +835,7 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Ret. Ordinaria</th>
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Ret. Adicional</th>
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Total Retención</th>
+                  <th className="text-left py-2 px-2 text-[#333333] font-medium">Metodología</th>
                 </tr>
               </thead>
               <tbody>
@@ -545,6 +854,23 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                   
                   // Calcular retención ordinaria (total - adicional)
                   const retencionOrdinaria = month.monthlyRetention - (month.additionalMonthlyRetention || 0);
+                  
+                  // Determinar metodología aplicada según el mes
+                  const getMetodologia = (monthNumber: number) => {
+                    if (monthNumber >= 1 && monthNumber <= 3) return "Paso 4: ÷12";
+                    if (monthNumber === 4) return "Paso 4: ÷9";
+                    if (monthNumber >= 5 && monthNumber <= 7) return "Paso 4: ÷8";
+                    if (monthNumber === 8) return "Paso 4: ÷5";
+                    if (monthNumber >= 9 && monthNumber <= 11) return "Paso 4: ÷4";
+                    if (monthNumber === 12) return "Paso 4: Ajuste";
+                    return "";
+                  };
+                  
+                  // Determinar si hay retención adicional (Paso 5)
+                  const hasRetencionAdicional = month.additionalMonthlyRetention > 0;
+                  const metodologiaCompleta = hasRetencionAdicional 
+                    ? `${getMetodologia(month.month)} + Paso 5`
+                    : getMetodologia(month.month);
                   
                   return (
                     <tr key={month.month} className="border-b border-[#E0E0E0] hover:bg-[#E3F2FD] transition-colors duration-200">
@@ -573,6 +899,18 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                       </td>
                       <td className="py-2 px-2 text-right font-bold text-[#B71C1C]">
                         {formatCurrency(month.monthlyRetention)}
+                      </td>
+                      <td className="py-2 px-2 text-left">
+                        <div className="text-xs">
+                          <div className={`font-medium ${hasRetencionAdicional ? 'text-[#F44336]' : 'text-[#9C27B0]'}`}>
+                            {metodologiaCompleta}
+                          </div>
+                          {hasRetencionAdicional && (
+                            <div className="text-[#FF9800] text-xs">
+                              Ingresos extraordinarios
+                            </div>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -611,6 +949,132 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Nota Final sobre Metodología SUNAT */}
+      <Card className="border-[#E0E0E0] shadow-sm">
+        <CardHeader className="bg-gradient-to-r from-[#004C97] to-[#1976D2] text-white">
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            📋 Información Legal y Metodología SUNAT
+          </CardTitle>
+          <CardDescription className="text-white opacity-90">
+            Base legal y metodología completa para el cálculo de retenciones
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Base Legal */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-[#333333] text-lg mb-3">⚖️ Base Legal</h4>
+              <div className="space-y-3 text-sm">
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <h5 className="font-medium text-[#004C97] mb-2">Artículo 46° - Deducción de 7 UIT</h5>
+                  <p className="text-[#666666]">
+                    Los trabajadores pueden deducir un monto fijo equivalente a siete (7) UIT de su remuneración bruta anual.
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <h5 className="font-medium text-[#4CAF50] mb-2">Artículo 49° - Donaciones</h5>
+                  <p className="text-[#666666]">
+                    Las donaciones solo se pueden deducir en diciembre con motivo del ajuste final del impuesto, 
+                    únicamente para trabajadores que perciben rentas de quinta categoría.
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <h5 className="font-medium text-[#FF9800] mb-2">Artículo 53° - Tasas Progresivas</h5>
+                  <p className="text-[#666666]">
+                    Se aplican tasas progresivas del 8%, 14%, 17%, 20% y 30% según los tramos de ingresos netos anuales.
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <h5 className="font-medium text-[#9C27B0] mb-2">Artículo 88° - Créditos Fiscales</h5>
+                  <p className="text-[#666666]">
+                    Los contribuyentes pueden deducir pagos a cuenta, créditos y saldos a favor reconocidos por SUNAT.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Metodología Completa */}
+            <div className="space-y-4">
+              <h4 className="font-semibold text-[#333333] text-lg mb-3">🧮 Metodología SUNAT - 5 Pasos</h4>
+              <div className="space-y-3 text-sm">
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-[#004C97] text-white px-2 py-1 rounded text-xs font-bold">PASO 1</span>
+                    <span className="font-medium">RBA Proyectada</span>
+                  </div>
+                  <p className="text-[#666666]">
+                    Cálculo de remuneración bruta anual incluyendo ingresos adicionales, gratificaciones, CTS y asignación familiar.
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-[#4CAF50] text-white px-2 py-1 rounded text-xs font-bold">PASO 2</span>
+                    <span className="font-medium">Deducción 7 UIT</span>
+                  </div>
+                  <p className="text-[#666666]">
+                    Aplicación de deducción fija de 7 UIT, gastos deducibles adicionales (3 UIT) y donaciones.
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-[#FF9800] text-white px-2 py-1 rounded text-xs font-bold">PASO 3</span>
+                    <span className="font-medium">Impuesto y Créditos</span>
+                  </div>
+                  <p className="text-[#666666]">
+                    Aplicación de tasas progresivas del Artículo 53° y deducción de créditos del Artículo 88°.
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-[#9C27B0] text-white px-2 py-1 rounded text-xs font-bold">PASO 4</span>
+                    <span className="font-medium">Fraccionamiento</span>
+                  </div>
+                  <p className="text-[#666666]">
+                    Distribución progresiva del impuesto anual en retenciones mensuales según la metodología SUNAT.
+                  </p>
+                </div>
+                
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-[#F44336] text-white px-2 py-1 rounded text-xs font-bold">PASO 5</span>
+                    <span className="font-medium">Retenciones Adicionales</span>
+                  </div>
+                  <p className="text-[#666666]">
+                    Cálculo de retenciones adicionales para ingresos extraordinarios (bonificaciones, utilidades, etc.).
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Nota Importante */}
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="text-yellow-600 mt-0.5">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="text-yellow-800">
+                <h5 className="font-medium mb-2">⚠️ Nota Importante</h5>
+                <p className="text-sm">
+                  Este cálculo está basado en la metodología oficial de SUNAT para el ejercicio 2025. 
+                  Los resultados son informativos y deben ser verificados por un contador o asesor fiscal. 
+                  La aplicación de donaciones y créditos requiere documentación específica según la normativa vigente.
+                </p>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

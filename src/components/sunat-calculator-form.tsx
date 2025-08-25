@@ -11,6 +11,7 @@ import { SunatCalculator, DeductibleExpenses } from '@/lib/sunat-calculator';
 import { BasicInfoStep } from './form-steps/basic-info-step';
 import { DeductibleExpensesStep } from './form-steps/deductible-expenses-step';
 import { AdditionalIncomeStep } from './form-steps/additional-income-step';
+import { TaxCreditsStep } from './form-steps/tax-credits-step';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -67,7 +68,14 @@ const formSchema = z.object({
   // Campos para bono extraordinario judicial
   isJudicialWorker: z.boolean(),
   judicialInstitution: z.enum(['poder_judicial', 'inpe', 'ministerio_publico']).optional(),
-  isDirectivePosition: z.boolean()
+  isDirectivePosition: z.boolean(),
+  // PASO 2: Campo para donaciones según Artículo 49° de la Ley
+  donations: z.number().min(0).max(1000000).optional(),
+  // PASO 3: Campos para créditos según Artículo 88° de la Ley
+  previousTaxCredits: z.number().min(0).max(1000000).optional(),
+  previousTaxPayments: z.number().min(0).max(1000000).optional(),
+  previousTaxRefunds: z.number().min(0).max(1000000).optional(),
+  isOnlyFifthCategoryIncome: z.boolean().optional()
 });
 
 // Now derive FormData from the schema to ensure they match exactly
@@ -87,33 +95,59 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
   const [isCalculating, setIsCalculating] = useState(false);
   const router = useRouter();
 
+  console.log('🚀 COMPONENTE INICIALIZADO');
+  console.log('  • Estado inicial - currentStep:', currentStep);
+  console.log('  • Estado inicial - isCalculating:', isCalculating);
+
+  // Logging adicional para detectar cambios de estado
+  useEffect(() => {
+    console.log('🔄 ESTADO CAMBIADO - currentStep:', currentStep);
+  }, [currentStep]);
+
+  useEffect(() => {
+    console.log('🔄 ESTADO CAMBIADO - isCalculating:', isCalculating);
+  }, [isCalculating]);
+
   // Update step information when step changes
   useEffect(() => {
+    console.log('🔄 ACTUALIZANDO INFORMACIÓN DEL PASO:', currentStep);
+    
     const stepInfo = {
       1: {
         title: 'Información Básica',
         description: 'Configura tu año fiscal, ingreso mensual, mes de inicio de trabajo y otros datos principales para el cálculo de retenciones',
         stepNumber: 1,
-        totalSteps: 3
+        totalSteps: 4
       },
       2: {
         title: 'Ingresos Adicionales',
         description: 'Configura gratificaciones, CTS, asignación familiar y otros ingresos adicionales que recibirás durante el año',
         stepNumber: 2,
-        totalSteps: 3
+        totalSteps: 4
       },
       3: {
         title: 'Gastos Deducibles',
         description: 'Ingresa tus gastos deducibles según categoría. Solo aplican si tus ingresos anuales superan 7 UIT (S/ 37,450)',
         stepNumber: 3,
-        totalSteps: 3
+        totalSteps: 4
+      },
+      4: {
+        title: 'Créditos Fiscales',
+        description: 'Ingresa tus créditos fiscales de declaraciones anteriores, pagos a cuenta y saldos a favor para ajustar el impuesto anual.',
+        stepNumber: 4,
+        totalSteps: 4
       }
     };
 
-    onStepChange(stepInfo[currentStep as keyof typeof stepInfo]);
+    const currentStepInfo = stepInfo[currentStep as keyof typeof stepInfo];
+    console.log('  • Información del paso:', currentStepInfo);
+    
+    onStepChange(currentStepInfo);
     
     // Scroll to top whenever step changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    console.log('✅ INFORMACIÓN DEL PASO ACTUALIZADA');
   }, [currentStep, onStepChange]);
 
   // Initialize step information on component mount
@@ -122,7 +156,7 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
       title: 'Información Básica',
       description: 'Configura tu año fiscal, ingreso mensual, mes de inicio de trabajo y otros datos principales para el cálculo de retenciones',
       stepNumber: 1,
-      totalSteps: 3
+      totalSteps: 4
     });
   }, [onStepChange]);
 
@@ -162,15 +196,39 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
       childrenStudying: false,
       isLimitedContract: false,
       contractEndMonth: undefined,
-              isPublicSectorWorker: false,
-        receivesSchoolingBonus: false,
-        isJudicialWorker: false,
-        judicialInstitution: undefined,
-        isDirectivePosition: false
+      isPublicSectorWorker: false,
+      receivesSchoolingBonus: false,
+      isJudicialWorker: false,
+      judicialInstitution: undefined,
+      isDirectivePosition: false,
+      // PASO 2: Valores por defecto para donaciones
+      donations: 0,
+      // PASO 3: Valores por defecto para créditos
+      previousTaxCredits: 0,
+      previousTaxPayments: 0,
+      previousTaxRefunds: 0,
+      isOnlyFifthCategoryIncome: false
     }
   });
 
   const onSubmit = async (data: FormData) => {
+    console.log('🚀 FORMULARIO ENVIADO - PASO ACTUAL:', currentStep);
+    console.log('  • ¿Se debería enviar en este paso?', currentStep === 4 ? 'SÍ' : 'NO');
+    console.log('  • Datos del formulario:', data);
+    
+    if (currentStep !== 4) {
+      console.error('❌ ERROR: El formulario se está enviando en el paso', currentStep, 'en lugar del paso 4');
+      console.error('  • Esto NO debería suceder. Verificando la causa...');
+      
+      // Prevenir el envío y mostrar error
+      alert(`Error: El formulario se está enviando en el paso ${currentStep} en lugar del paso 4. Por favor, completa todos los pasos.`);
+      
+      // Forzar el paso correcto
+      setCurrentStep(4);
+      return;
+    }
+    
+    console.log('✅ FORMULARIO ENVIADO CORRECTAMENTE en el paso 4');
     setIsCalculating(true);
     
     try {
@@ -250,6 +308,27 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
       console.log('  • Servicios Profesionales:', data.professionalServices);
       console.log('  • Propiedades de Alquiler:', data.rentalProperties);
       console.log('  • Contribuciones EsSalud:', data.essaludContributions);
+      
+      // PASO 2: Logging para donaciones
+      console.log('\n🎁 PASO 2 - DONACIONES (Artículo 49° de la Ley):');
+      console.log('  • Monto de Donaciones:', data.donations);
+      console.log('  • Nota: Las donaciones solo se pueden deducir en diciembre con motivo del ajuste final');
+      console.log('  • Solo aplica para trabajadores que perciben rentas de quinta categoría');
+      
+      // PASO 3: Logging para créditos
+      console.log('\n💳 PASO 3 - CRÉDITOS (Artículo 88° de la Ley):');
+      console.log('  • Créditos de Declaraciones Anteriores:', data.previousTaxCredits);
+      console.log('  • Pagos a Cuenta del Impuesto:', data.previousTaxPayments);
+      console.log('  • Saldos a Favor Reconocidos:', data.previousTaxRefunds);
+      console.log('  • Solo Renta de Quinta Categoría:', data.isOnlyFifthCategoryIncome);
+      console.log('  • Nota: Los créditos se deducen del impuesto anual proyectado');
+      
+      console.log('\n🎯 RESUMEN DE TODOS LOS PASOS:');
+      console.log('  • PASO 1: RBA proyectada y ingresos adicionales');
+      console.log('  • PASO 2: Deducción de 7 UIT y donaciones');
+      console.log('  • PASO 3: Aplicación de tasas del Artículo 53° y créditos del Artículo 88°');
+      console.log('  • PASO 4: Fraccionamiento del impuesto anual en retenciones mensuales');
+      console.log('  • PASO 5: Retenciones adicionales por ingresos extraordinarios');
       
       const calculator = new SunatCalculator();
       
@@ -380,6 +459,24 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
       console.log('  • Total Deducción:', calculationResult.summary.deductibleExpenses.totalDeduction);
       console.log('  • Máxima Deducción (3 UIT):', calculationResult.summary.deductibleExpenses.maxDeduction);
       
+      // PASO 2: Logging de resultados para donaciones
+      console.log('\n🎁 PASO 2 - RESULTADOS DE DONACIONES:');
+      console.log('  • Deducción 7 UIT:', calculationResult.summary.deduction7UIT);
+      console.log('  • Monto de Donaciones:', calculationResult.summary.donations);
+      console.log('  • Deducción por Donaciones:', calculationResult.summary.donationsDeduction);
+      console.log('  • Ingreso Neto Final:', calculationResult.summary.finalNetIncome);
+      
+      // PASO 3: Logging de resultados para créditos
+      console.log('\n💳 PASO 3 - RESULTADOS DE CRÉDITOS:');
+      console.log('  • Impuesto Anual Proyectado:', calculationResult.summary.projectedAnnualTax);
+      console.log('  • Total de Créditos Aplicables:', calculationResult.summary.totalTaxCredits);
+      console.log('  • Impuesto Anual Final:', calculationResult.summary.finalAnnualTax);
+      console.log('  • Desglose de Créditos:');
+      console.log('    - Créditos Anteriores:', calculationResult.summary.taxCreditsBreakdown.previousCredits);
+      console.log('    - Pagos a Cuenta:', calculationResult.summary.taxCreditsBreakdown.previousPayments);
+      console.log('    - Saldos a Favor:', calculationResult.summary.taxCreditsBreakdown.previousRefunds);
+      console.log('  • Solo Renta de Quinta Categoría:', calculationResult.summary.isOnlyFifthCategoryIncome);
+      
       console.log('\n📅 CÁLCULOS MENSUALES:');
       calculationResult.monthlyCalculations.forEach((month, index) => {
         console.log(`  📍 ${month.monthName} (Mes ${month.month}):`);
@@ -455,28 +552,57 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
   };
 
   const nextStep = () => {
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
+    console.log('🔄 NAVEGACIÓN: Intentando ir al siguiente paso');
+    console.log('  • Paso actual:', currentStep);
+    console.log('  • Total de pasos:', 4);
+    
+    if (currentStep < 4) {
+      const nextStepNumber = currentStep + 1;
+      console.log('  • Siguiente paso:', nextStepNumber);
+      setCurrentStep(nextStepNumber);
+      
       // Additional scroll to top for immediate feedback
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      console.log('✅ NAVEGACIÓN: Paso actualizado exitosamente');
+    } else {
+      console.log('⚠️ NAVEGACIÓN: Ya estás en el último paso');
     }
   };
 
   const prevStep = () => {
+    console.log('🔄 NAVEGACIÓN: Intentando ir al paso anterior');
+    console.log('  • Paso actual:', currentStep);
+    
     if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
+      const prevStepNumber = currentStep - 1;
+      console.log('  • Paso anterior:', prevStepNumber);
+      setCurrentStep(prevStepNumber);
+      
+      console.log('✅ NAVEGACIÓN: Paso anterior establecido exitosamente');
+    } else {
+      console.log('⚠️ NAVEGACIÓN: Ya estás en el primer paso');
     }
   };
 
   const renderStep = () => {
+    console.log('🎭 RENDERIZANDO PASO:', currentStep);
+    
     switch (currentStep) {
       case 1:
+        console.log('  • Renderizando: BasicInfoStep');
         return <BasicInfoStep form={form} />;
       case 2:
+        console.log('  • Renderizando: AdditionalIncomeStep');
         return <AdditionalIncomeStep form={form} />;
       case 3:
+        console.log('  • Renderizando: DeductibleExpensesStep');
         return <DeductibleExpensesStep form={form} />;
+      case 4:
+        console.log('  • Renderizando: TaxCreditsStep');
+        return <TaxCreditsStep form={form} />;
       default:
+        console.log('  • Renderizando: BasicInfoStep (default)');
         return <BasicInfoStep form={form} />;
     }
   };
@@ -494,8 +620,29 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
       </CardHeader>
       <CardContent className="p-8">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-
+          <form className="space-y-8" onSubmit={(e) => {
+            e.preventDefault(); // Prevenir envío automático
+            console.log('🚫 FORMULARIO PREVENIDO - Envío automático bloqueado');
+          }}>
+            {/* Step Indicator */}
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">Progreso del Formulario</span>
+                <span className="text-sm text-gray-500">Paso {currentStep} de 4</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-[#004C97] h-2 rounded-full transition-all duration-300 ease-in-out"
+                  style={{ width: `${(currentStep / 4) * 100}%` }}
+                ></div>
+              </div>
+              <div className="flex justify-between mt-2 text-xs text-gray-500">
+                <span>1. Básico</span>
+                <span>2. Ingresos</span>
+                <span>3. Gastos</span>
+                <span>4. Créditos</span>
+              </div>
+            </div>
 
             {/* Step Content */}
             <div className="pt-4">
@@ -515,7 +662,7 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
               </Button>
               
               <div className="flex gap-4">
-                {currentStep < 3 ? (
+                {currentStep < 4 ? (
                   <Button
                     type="button"
                     onClick={nextStep}
@@ -525,11 +672,48 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
                   </Button>
                 ) : (
                   <Button 
-                    type="submit" 
+                    type="button" 
+                    onClick={() => {
+                      console.log('🔘 BOTÓN CALCULAR PRESIONADO MANUALMENTE');
+                      console.log('  • Paso actual:', currentStep);
+                      console.log('  • Ejecutando onSubmit...');
+                      form.handleSubmit(onSubmit)();
+                    }}
                     className="bg-[#B71C1C] hover:bg-[#C62828] border-0" 
                     disabled={isCalculating}
                   >
                     {isCalculating ? 'Calculando...' : 'Calcular Retenciones'}
+                  </Button>
+                )}
+                
+                {/* Debug Button - Temporal */}
+                {process.env.NODE_ENV === 'development' && (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      console.log('🔧 DEBUG: Forzando navegación al paso 4');
+                      setCurrentStep(4);
+                    }}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs"
+                  >
+                    Debug: Paso 4
+                  </Button>
+                )}
+                
+                {/* Debug Button - Estado del Formulario */}
+                {process.env.NODE_ENV === 'development' && (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      console.log('🔍 DEBUG: Estado del formulario');
+                      console.log('  • currentStep:', currentStep);
+                      console.log('  • isCalculating:', isCalculating);
+                      console.log('  • Form values:', form.getValues());
+                      console.log('  • Form state:', form.formState);
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
+                  >
+                    Debug: Estado
                   </Button>
                 )}
               </div>

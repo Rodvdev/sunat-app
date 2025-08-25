@@ -41,6 +41,13 @@ export interface SunatCalculationParams {
   isJudicialWorker?: boolean;      // Si es personal judicial
   judicialInstitution?: 'poder_judicial' | 'inpe' | 'ministerio_publico'; // Institución judicial
   isDirectivePosition?: boolean;   // Si tiene cargo directivo
+  // PASO 2: Campo para donaciones según Artículo 49° de la Ley
+  donations?: number;               // Monto de donaciones efectuadas durante el año
+  // PASO 3: Campos para créditos según Artículo 88° de la Ley
+  previousTaxCredits?: number;      // Créditos contra el tributo de declaraciones anteriores
+  previousTaxPayments?: number;     // Pagos efectuados a cuenta del impuesto liquidado
+  previousTaxRefunds?: number;      // Saldos a favor reconocidos por SUNAT o establecidos por el contribuyente
+  isOnlyFifthCategoryIncome?: boolean; // Si solo percibe rentas de quinta categoría (Artículo 79°)
 }
 
 export interface DeductibleExpenses {
@@ -129,6 +136,21 @@ export interface SunatCalculationResult {
     // Campo para bono por escolaridad del sector público
     receivesSchoolingBonus?: boolean;
     totalBonoEscolaridad?: number;
+    // PASO 2: Información sobre donaciones y deducción de 7 UIT
+    deduction7UIT: number;         // Monto de la deducción de 7 UIT
+    donations: number;              // Monto total de donaciones
+    donationsDeduction: number;     // Deducción por donaciones (solo en diciembre)
+    finalNetIncome: number;         // Ingreso neto final después de todas las deducciones
+    // PASO 3: Información sobre impuesto anual y créditos del Artículo 88°
+    projectedAnnualTax: number;     // Impuesto anual proyectado antes de créditos
+    totalTaxCredits: number;        // Total de créditos aplicables
+    finalAnnualTax: number;         // Impuesto anual final después de créditos
+    taxCreditsBreakdown: {          // Desglose de créditos aplicados
+      previousCredits: number;      // Créditos de declaraciones anteriores
+      previousPayments: number;     // Pagos a cuenta del impuesto
+      previousRefunds: number;      // Saldos a favor reconocidos
+    };
+    isOnlyFifthCategoryIncome: boolean; // Si solo percibe rentas de quinta categoría
   };
 }
 
@@ -206,7 +228,8 @@ export class SunatCalculator {
     insuranceType: 'essalud' | 'eps' = 'essalud',
     startWorkMonth: number = 1
   ): { base: number; bono: number; total: number; mesesTrabajados: number } {
-    // Meses trabajados desde el inicio hasta el mes actual
+    // CORRECCIÓN: startWorkMonth ahora representa el mes de cálculo
+    // Los meses trabajados deben ser desde el mes de cálculo hasta el mes actual
     const mesesTrabajados = Math.max(1, month - startWorkMonth + 1);
     
     // Cálculo base: (Sueldo × Meses Trabajados) ÷ 6
@@ -237,7 +260,8 @@ export class SunatCalculator {
     monthlyIncome: number,
     startWorkMonth: number = 1
   ): { base: number; dias: number; total: number } {
-    // Meses trabajados desde el inicio hasta el mes actual
+    // CORRECCIÓN: startWorkMonth ahora representa el mes de cálculo
+    // Los meses trabajados deben ser desde el mes de cálculo hasta el mes actual
     const mesesTrabajados = Math.max(1, month - startWorkMonth + 1);
     
     // Días trabajados en el mes actual (aproximado a 30 días por mes)
@@ -269,15 +293,19 @@ export class SunatCalculator {
   ): number {
     let total = 0;
     
+    // CORRECCIÓN: Solo calcular gratificaciones si el trabajador ya está trabajando en esos meses
+    // y si esos meses están dentro del período de cálculo
+    const calculationMonth = startWorkMonth; // startWorkMonth ahora representa el mes de cálculo
+    
     // Gratificación de Julio (mes 7)
-    if (7 >= startWorkMonth) {
-      const gratificacionJulio = this.calculateGratificacion(7, monthlyIncome, insuranceType, startWorkMonth);
+    if (7 >= calculationMonth) {
+      const gratificacionJulio = this.calculateGratificacion(7, monthlyIncome, insuranceType, calculationMonth);
       total += gratificacionJulio.total;
     }
     
     // Gratificación de Diciembre (mes 12)
-    if (12 >= startWorkMonth) {
-      const gratificacionDiciembre = this.calculateGratificacion(12, monthlyIncome, insuranceType, startWorkMonth);
+    if (12 >= calculationMonth) {
+      const gratificacionDiciembre = this.calculateGratificacion(12, monthlyIncome, insuranceType, calculationMonth);
       total += gratificacionDiciembre.total;
     }
     
@@ -293,15 +321,19 @@ export class SunatCalculator {
   ): number {
     let total = 0;
     
+    // CORRECCIÓN: Solo calcular CTS si el trabajador ya está trabajando en esos meses
+    // y si esos meses están dentro del período de cálculo
+    const calculationMonth = startWorkMonth; // startWorkMonth ahora representa el mes de cálculo
+    
     // CTS de Mayo (mes 5)
-    if (5 >= startWorkMonth) {
-      const ctsMayo = this.calculateCTS(5, monthlyIncome, startWorkMonth);
+    if (5 >= calculationMonth) {
+      const ctsMayo = this.calculateCTS(5, monthlyIncome, calculationMonth);
       total += ctsMayo.total;
     }
     
     // CTS de Noviembre (mes 11)
-    if (11 >= startWorkMonth) {
-      const ctsNoviembre = this.calculateCTS(11, monthlyIncome, startWorkMonth);
+    if (11 >= calculationMonth) {
+      const ctsNoviembre = this.calculateCTS(11, monthlyIncome, calculationMonth);
       total += ctsNoviembre.total;
     }
     
@@ -310,8 +342,12 @@ export class SunatCalculator {
 
   /**
    * Calcula el total de ingresos adicionales por mes
+   * CORRECCIÓN: Solo considerar ingresos desde el mes de cálculo hasta diciembre
    */
-  private calculateTotalAdditionalIncomeByMonth(additionalIncomeByMonth?: { month: number; amount: number }[]): number {
+  private calculateTotalAdditionalIncomeByMonth(
+    additionalIncomeByMonth?: { month: number; amount: number }[],
+    calculationMonth: number = 1
+  ): number {
     if (!additionalIncomeByMonth || additionalIncomeByMonth.length === 0) {
       return 0;
     }
@@ -320,7 +356,8 @@ export class SunatCalculator {
     const monthMap = new Map<number, number>();
     
     for (const item of additionalIncomeByMonth) {
-      if (!monthMap.has(item.month)) {
+      // CORRECCIÓN: Solo considerar meses desde el mes de cálculo hasta diciembre
+      if (item.month >= calculationMonth && item.month <= 12 && !monthMap.has(item.month)) {
         monthMap.set(item.month, item.amount);
       }
     }
@@ -336,9 +373,19 @@ export class SunatCalculator {
 
   /**
    * Obtiene el ingreso adicional para un mes específico
+   * CORRECCIÓN: Solo considerar si el mes está dentro del período de cálculo
    */
-  private getAdditionalIncomeForMonth(month: number, additionalIncomeByMonth?: { month: number; amount: number }[]): number {
+  private getAdditionalIncomeForMonth(
+    month: number, 
+    additionalIncomeByMonth?: { month: number; amount: number }[],
+    calculationMonth: number = 1
+  ): number {
     if (!additionalIncomeByMonth || additionalIncomeByMonth.length === 0) {
+      return 0;
+    }
+
+    // CORRECCIÓN: Solo considerar ingresos si el mes está dentro del período de cálculo
+    if (month < calculationMonth || month > 12) {
       return 0;
     }
 
@@ -348,6 +395,54 @@ export class SunatCalculator {
 
   calculate(params: SunatCalculationParams): SunatCalculationResult {
     const monthlyCalculations: MonthlyCalculation[] = [];
+    
+    // IMPLEMENTACIÓN DEL PASO 1 DE LA METODOLOGÍA SUNAT
+    // ==================================================
+    // Según la metodología SUNAT, el Paso 1 consiste en:
+    // 1. Multiplicar la remuneración ordinaria mensual por el número de meses que falte para terminar el ejercicio
+    // 2. Incluir el mes al que corresponde la retención
+    // 3. Sumar las gratificaciones ordinarias que correspondan al ejercicio
+    // 4. Sumar remuneraciones ordinarias y demás conceptos de meses anteriores del mismo ejercicio
+    // 5. El resultado es la Remuneración Bruta Anual (RBA) proyectada
+    
+    // IMPLEMENTACIÓN DEL PASO 2 DE LA METODOLOGÍA SUNAT
+    // ==================================================
+    // Según la metodología SUNAT, el Paso 2 consiste en:
+    // 1. Restar el monto fijo equivalente a las siete (7) UIT del Artículo 46° de la Ley
+    // 2. Las donaciones del Artículo 49° solo se pueden deducir en diciembre con motivo del ajuste final
+    // 3. Solo aplica para trabajadores que solo perciben rentas de quinta categoría
+    // 4. Las donaciones se acreditan con documentos específicos según el Artículo 21°
+    
+    // IMPLEMENTACIÓN DEL PASO 3 DE LA METODOLOGÍA SUNAT
+    // ==================================================
+    // Según la metodología SUNAT, el Paso 3 consiste en:
+    // 1. Aplicar las tasas previstas en el Artículo 53° de la Ley al ingreso neto
+    // 2. Determinar el impuesto anual usando las escalas progresivas
+    // 3. Deducir los créditos del Artículo 88° (pagos a cuenta, créditos anteriores, saldos a favor)
+    // 4. Aplicar excepciones del Artículo 79° para rentas de quinta categoría
+    
+    // IMPLEMENTACIÓN DEL PASO 4 DE LA METODOLOGÍA SUNAT
+    // ==================================================
+    // Según la metodología SUNAT, el Paso 4 consiste en:
+    // 1. Fraccionar el impuesto anual determinado en cada mes
+    // 2. Enero-Marzo: IAF ÷ 12
+    // 3. Abril: (IAF - Retenciones enero-marzo) ÷ 9
+    // 4. Mayo-Julio: (IAF - Retenciones enero-abril) ÷ 8
+    // 5. Agosto: (IAF - Retenciones enero-julio) ÷ 5
+    // 6. Septiembre-Noviembre: (IAF - Retenciones enero-agosto) ÷ 4
+    // 7. Diciembre: Ajuste final (IAF - Retenciones enero-noviembre)
+    
+    // IMPLEMENTACIÓN DEL PASO 5 DE LA METODOLOGÍA SUNAT
+    // ==================================================
+    // Según la metodología SUNAT, el Paso 5 consiste en:
+    // 1. Aplicar los Pasos a) al d) para determinar el impuesto sobre remuneraciones ordinarias
+    // 2. Sumar el monto adicional obtenido del siguiente procedimiento:
+    //    i) Al resultado de aplicar los Pasos a) y b) se suma el monto adicional del mes
+    //    ii) Se aplican las tasas del Artículo 53° a la suma obtenida
+    //    iii) Se deduce el monto calculado en el Paso c) (créditos)
+    //    iv) El resultado es la retención adicional del mes
+    // 3. Los ingresos extraordinarios incluyen: participaciones, reintegros, gratificaciones
+    //    extraordinarias, bonificaciones, utilidades, CTS, aguinaldo, bono escolaridad, etc.
     
     // Valores por defecto para parámetros opcionales
     const insuranceType = params.insuranceType || 'essalud';
@@ -369,76 +464,169 @@ export class SunatCalculator {
       }
     }
     
-    // Calcular ingresos totales anuales proyectados para determinar si aplican gastos deducibles
-      // Calcular ingresos totales anuales proyectados para determinar si aplican gastos deducibles
-      // Según SUNAT: la remuneración mensual se multiplica por el número de meses que falta para terminar el ejercicio gravable
-      let remainingMonths = 12 - startWorkMonth + 1; // Meses desde el inicio hasta diciembre
-      
-      // Si es un contrato de duración limitada, ajustar los meses
-      const isLimitedContract = params.isLimitedContract || false;
-      const contractEndMonth = params.contractEndMonth;
-      let totalContractMonths = remainingMonths;
-      
-      if (isLimitedContract && contractEndMonth && contractEndMonth >= startWorkMonth && contractEndMonth <= 12) {
-        remainingMonths = contractEndMonth - startWorkMonth + 1;
-        totalContractMonths = remainingMonths;
-      }
-      
-      // Calcular aguinaldo para sector público
-      let totalAguinaldo = 0;
-      let totalBonoEscolaridad = 0;
-      const isPublicSectorWorker = params.isPublicSectorWorker || false;
-      const receivesSchoolingBonus = params.receivesSchoolingBonus || false;
-      
-      if (isPublicSectorWorker && 7 >= startWorkMonth) { // Solo si está trabajando en julio
-        totalAguinaldo = this.AGUINALDO_PUBLICO;
-      }
-      
-      if (isPublicSectorWorker && receivesSchoolingBonus) {
-        totalBonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
-      }
-      
-      // RBA para los meses que faltan para acabar el año - para cálculo del IAP y determinar si califica para gastos deducibles
-      // IMPORTANTE: Según SUNAT, aun cuando el contrato sea por plazo inferior a un año, 
-      // la proyección equivale a multiplicar la remuneración mensual por el número de meses que falte para acabar el año
-      const rbaFullYear = (params.monthlyIncome * remainingMonths) + 
-        this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth) +
-        (calculateGratificaciones ? this.calculateTotalGratificaciones(params.monthlyIncome, insuranceType, startWorkMonth) : 0) +
-        (calculateCTS ? this.calculateTotalCTS(params.monthlyIncome, startWorkMonth) : 0) +
-        (calculateAsignacionFamiliar ? (asignacionFamiliar * remainingMonths) : 0) +
-        totalAguinaldo +
-        totalBonoEscolaridad;
-      
-      // RBA para los meses que realmente trabaja - para cálculos mensuales
-      const totalProjectedAnnualIncome = (params.monthlyIncome * remainingMonths) + 
-        this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth) +
-        (calculateGratificaciones ? this.calculateTotalGratificaciones(params.monthlyIncome, insuranceType, startWorkMonth) : 0) +
-        (calculateCTS ? this.calculateTotalCTS(params.monthlyIncome, startWorkMonth) : 0) +
-        (calculateAsignacionFamiliar ? (asignacionFamiliar * remainingMonths) : 0) +
-        totalAguinaldo +
-        totalBonoEscolaridad;
-      
-      // Los gastos deducibles solo aplican si los ingresos anuales superan 7 UIT (S/ 37,450)
-      // IMPORTANTE: Usar rbaFullYear para determinar si califica, no totalProjectedAnnualIncome
-      const qualifiesForDeductibleExpenses = rbaFullYear > this.DEDUCTION_7_UIT;
-      
-      // Calcular gastos deducibles solo si califica
-      const deductibleExpensesSummary = qualifiesForDeductibleExpenses 
-        ? this.calculateDeductibleExpenses(params.deductibleExpenses)
-        : this.getEmptyDeductibleExpensesSummary();
-        
-      // Calcular impuesto anual proyectado
-      // IMPORTANTE: Usar rbaFullYear para calcular el IAP, no totalProjectedAnnualIncome
-      const projectedNetIncome = Math.max(0, rbaFullYear - this.DEDUCTION_7_UIT - deductibleExpensesSummary.totalDeduction);
-      
-      // Calcular la tasa de impuesto aplicable según el tramo de la RNA
-      const applicableTaxRate = this.calculateEffectiveTaxRateByTramo(projectedNetIncome);
-      
-      // Impuesto Anual Proyectado = RNA × Tasa Aplicada
-      const projectedAnnualTax = projectedNetIncome * applicableTaxRate;
+    // PASO 1 SUNAT: Calcular la Remuneración Bruta Anual (RBA) proyectada
+    // La remuneración ordinaria mensual se multiplica por el número de meses que falte para terminar el ejercicio,
+    // incluyendo el mes al que corresponda la retención. Al resultado se le suman las gratificaciones ordinarias
+    // que correspondan al ejercicio y las remuneraciones ordinarias y demás conceptos que hubieran sido puestas
+    // a disposición del trabajador en los meses anteriores del mismo ejercicio.
+    
+    // CORRECCIÓN: remainingMonths debe ser desde el mes de cálculo hasta diciembre
+    // (no desde el mes de inicio de trabajo)
+    let remainingMonths = 12 - params.calculationMonth + 1; // Meses desde el mes de cálculo hasta diciembre
+    
+    // Si es un contrato de duración limitada, ajustar los meses
+    const isLimitedContract = params.isLimitedContract || false;
+    const contractEndMonth = params.contractEndMonth;
+    let totalContractMonths = remainingMonths;
+    
+    if (isLimitedContract && contractEndMonth && contractEndMonth >= params.calculationMonth && contractEndMonth <= 12) {
+      remainingMonths = contractEndMonth - params.calculationMonth + 1;
+      totalContractMonths = remainingMonths;
+    }
+    
+    // Calcular aguinaldo para sector público
+    let totalAguinaldo = 0;
+    let totalBonoEscolaridad = 0;
+    const isPublicSectorWorker = params.isPublicSectorWorker || false;
+    const receivesSchoolingBonus = params.receivesSchoolingBonus || false;
+    
+    if (isPublicSectorWorker && 7 >= params.calculationMonth) { // Solo si está trabajando en julio
+      totalAguinaldo = this.AGUINALDO_PUBLICO;
+    }
+    
+    if (isPublicSectorWorker && receivesSchoolingBonus) {
+      totalBonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
+    }
+    
+    // PASO 1.1: Calcular remuneración ordinaria proyectada
+    // Remuneración mensual × meses que faltan para terminar el ejercicio
+    const projectedOrdinaryIncome = params.monthlyIncome * remainingMonths;
+    
+    // PASO 1.2: Sumar gratificaciones ordinarias del ejercicio
+    // Solo considerar gratificaciones desde el mes de cálculo hasta diciembre
+    const projectedGratificaciones = calculateGratificaciones ? 
+      this.calculateTotalGratificaciones(params.monthlyIncome, insuranceType, params.calculationMonth) : 0;
+    
+    // PASO 1.3: Sumar CTS del ejercicio
+    // Solo considerar CTS desde el mes de cálculo hasta diciembre
+    const projectedCTS = calculateCTS ? 
+      this.calculateTotalCTS(params.monthlyIncome, params.calculationMonth) : 0;
+    
+    // PASO 1.4: Sumar asignación familiar proyectada
+    // Solo considerar asignación familiar desde el mes de cálculo hasta diciembre
+    const projectedAsignacionFamiliar = calculateAsignacionFamiliar ? 
+      (asignacionFamiliar * remainingMonths) : 0;
+    
+    // PASO 1.5: Sumar ingresos adicionales por mes (participaciones, reintegros, etc.)
+    // Solo considerar ingresos adicionales desde el mes de cálculo hasta diciembre
+    const projectedAdditionalIncome = this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth, params.calculationMonth);
+    
+    // PASO 1.6: Sumar otros conceptos extraordinarios (bonificaciones, utilidades, aguinaldo, bono escolaridad)
+    // Estos conceptos se consideran una sola vez al año, no se multiplican por meses
+    const projectedExtraordinaryIncome = (params.bonificaciones || 0) + 
+      (params.utilidades || 0) + 
+      totalAguinaldo + 
+      totalBonoEscolaridad;
+    
+    // PASO 1.7: Calcular RBA total proyectada
+    // RBA = Remuneración ordinaria proyectada + Gratificaciones + CTS + Asignación familiar + 
+    //        Ingresos adicionales + Conceptos extraordinarios
+    const rbaFullYear = projectedOrdinaryIncome + 
+      projectedGratificaciones + 
+      projectedCTS + 
+      projectedAsignacionFamiliar + 
+      projectedAdditionalIncome + 
+      projectedExtraordinaryIncome;
+    
+    // RBA para los meses que realmente trabaja - para cálculos mensuales
+    // (mantener compatibilidad con código existente)
+    const totalProjectedAnnualIncome = rbaFullYear;
+    
+    // PASO 2 SUNAT: Aplicar deducción de 7 UIT y donaciones
+    // ========================================================
+    // Según el Artículo 46° de la Ley: Se resta el monto fijo equivalente a las siete (7) UIT
+    // Según el Artículo 49° de la Ley: Las donaciones solo se pueden deducir en diciembre
+    // con motivo del ajuste final del impuesto (solo para rentas de quinta categoría)
+    
+    // PASO 2.1: Aplicar deducción de 7 UIT
+    // La deducción de 7 UIT es un monto fijo que se aplica a todos los trabajadores
+    // independientemente de su nivel de ingresos
+    const deduction7UIT = this.DEDUCTION_7_UIT; // S/ 37,450 (7 × S/ 5,350)
+    
+    // PASO 2.2: Calcular ingreso neto después de la deducción de 7 UIT
+    // Este es el ingreso sobre el cual se pueden aplicar gastos deducibles
+    const incomeAfter7UITDeduction = Math.max(0, rbaFullYear - deduction7UIT);
+    
+    // PASO 2.3: Determinar si califica para gastos deducibles
+    // Los gastos deducibles solo aplican si los ingresos anuales superan 7 UIT (S/ 37,450)
+    // Esto es importante porque determina si se pueden considerar gastos adicionales
+    const qualifiesForDeductibleExpenses = rbaFullYear > deduction7UIT;
+    
+    // PASO 2.4: Calcular gastos deducibles solo si califica
+    // Los gastos deducibles incluyen restaurantes, servicios médicos, profesionales, etc.
+    // con un límite máximo de 3 UIT adicionales
+    const deductibleExpensesSummary = qualifiesForDeductibleExpenses 
+      ? this.calculateDeductibleExpenses(params.deductibleExpenses)
+      : this.getEmptyDeductibleExpensesSummary();
+    
+    // PASO 2.5: Calcular ingreso neto después de gastos deducibles
+    // Este es el ingreso final sobre el cual se calcula el impuesto
+    const incomeAfterDeductibleExpenses = Math.max(0, incomeAfter7UITDeduction - deductibleExpensesSummary.totalDeduction);
+    
+    // PASO 2.6: Calcular ingreso neto final (antes de impuestos)
+    // NOTA: Las donaciones se consideran en el cálculo final, pero solo se aplican en diciembre
+    // con motivo del ajuste final del impuesto según el Artículo 49° de la Ley
+    const finalNetIncome = incomeAfterDeductibleExpenses;
+    
+    // PASO 2.7: Calcular impuesto anual proyectado
+    // El impuesto se calcula sobre el ingreso neto final usando las escalas progresivas de SUNAT
+    const applicableTaxRate = this.calculateEffectiveTaxRateByTramo(finalNetIncome);
+    const projectedAnnualTax = finalNetIncome * applicableTaxRate;
+    
+    // PASO 3 SUNAT: Aplicar tasas del Artículo 53° y créditos del Artículo 88°
+    // ============================================================================
+    // Según el Artículo 53° de la Ley: Se aplican las tasas progresivas al ingreso neto
+    // Según el Artículo 88° de la Ley: Se deducen los créditos a que tenga derecho el trabajador
+    
+    // PASO 3.1: Verificar si solo percibe rentas de quinta categoría (Artículo 79°)
+    // Los contribuyentes que solo perciban rentas de quinta categoría no presentan declaración jurada
+    // excepto en casos específicos (Artículo 46° penúltimo párrafo o solicitud de devolución)
+    const isOnlyFifthCategoryIncome = params.isOnlyFifthCategoryIncome || false;
+    
+    // PASO 3.2: Calcular créditos aplicables según Artículo 88°
+    // Inciso b): Pagos efectuados a cuenta del impuesto liquidado y créditos contra dicho tributo
+    // Estos créditos incluyen pagos voluntarios, retenciones de ejercicios anteriores, etc.
+    const previousTaxPayments = params.previousTaxPayments || 0;
+    const previousTaxCredits = params.previousTaxCredits || 0;
+    
+    // Inciso c): Saldos a favor reconocidos por SUNAT o establecidos por el contribuyente
+    // en declaraciones juradas anteriores, siempre que no hayan sido impugnadas
+    // Estos saldos pueden provenir de devoluciones, compensaciones o ajustes de ejercicios anteriores
+    const previousTaxRefunds = params.previousTaxRefunds || 0;
+    
+    // PASO 3.3: Calcular total de créditos aplicables
+    // Los créditos se suman para determinar la reducción total del impuesto a pagar
+    const totalTaxCredits = previousTaxPayments + previousTaxCredits + previousTaxRefunds;
+    
+    // PASO 3.4: Calcular impuesto anual final después de créditos
+    // El impuesto final no puede ser negativo, si los créditos exceden el impuesto se genera saldo a favor
+    const finalAnnualTax = Math.max(0, projectedAnnualTax - totalTaxCredits);
+    
+    // PASO 3.5: Validar que los créditos no excedan el impuesto proyectado
+    if (totalTaxCredits > projectedAnnualTax) {
+      // Si los créditos exceden el impuesto, se genera un saldo a favor
+      // Este saldo se puede aplicar en futuros ejercicios o solicitar devolución
+      // según lo establecido en el Artículo 88° de la Ley
+      console.warn(`Los créditos (S/ ${totalTaxCredits}) exceden el impuesto proyectado (S/ ${projectedAnnualTax}). Se genera un saldo a favor de S/ ${totalTaxCredits - projectedAnnualTax}.`);
+    }
     
     // Inicializar retenciones acumuladas
     let accumulatedRetentions = params.previousRetentions;
+    
+    // PASO 4: Calcular retenciones mensuales según metodología SUNAT
+    // ==============================================================
+    // Se calculan las retenciones para cada mes desde el mes de cálculo hasta diciembre
+    // siguiendo la metodología de fraccionamiento progresivo establecida por SUNAT
     
     // Calculate for each month from calculation month to December (or contract end month if limited)
     const endMonth = (isLimitedContract && contractEndMonth) ? Math.min(contractEndMonth, 12) : 12;
@@ -448,7 +636,7 @@ export class SunatCalculator {
       
       // Calculate monthly income and additional income types
       const monthlyIncome = params.monthlyIncome;
-      const additionalIncome = this.getAdditionalIncomeForMonth(month, params.additionalIncomeByMonth);
+      const additionalIncome = this.getAdditionalIncomeForMonth(month, params.additionalIncomeByMonth, params.calculationMonth);
       
       // Calculate gratificaciones (Julio y Diciembre por defecto)
       let gratificaciones = 0;
@@ -461,12 +649,15 @@ export class SunatCalculator {
       
       if (params.gratificacionesMonth && month === params.gratificacionesMonth && (params.gratificaciones || 0) > 0) {
         // Mes personalizado especificado Y con valor mayor a 0
-        gratificaciones = params.gratificaciones || 0;
+        // CORRECCIÓN: Solo considerar si el mes está dentro del período de cálculo
+        if (month >= params.calculationMonth) {
+          gratificaciones = params.gratificaciones || 0;
+        }
       } else if (calculateGratificaciones && (month === 7 || month === 12)) {
         // Calcular automáticamente si está marcado el checkbox
-        // Y solo si el trabajador ya estaba trabajando en ese mes
-        if (month >= startWorkMonth) {
-          const gratificacionCalc = this.calculateGratificacion(month, params.monthlyIncome, insuranceType, startWorkMonth);
+        // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
+        if (month >= params.calculationMonth) {
+          const gratificacionCalc = this.calculateGratificacion(month, params.monthlyIncome, insuranceType, params.calculationMonth);
           gratificaciones = gratificacionCalc.total;
           gratificacionDetail = {
             gratificacionBase: gratificacionCalc.base,
@@ -478,32 +669,37 @@ export class SunatCalculator {
       }
       
       // Calculate bonificaciones
-      const bonificaciones = month === params.bonificacionesMonth ? (params.bonificaciones || 0) : 0;
+      // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
+      const bonificaciones = (month === params.bonificacionesMonth && month >= params.calculationMonth) ? (params.bonificaciones || 0) : 0;
       
       // Calculate utilidades
-      const utilidades = month === params.utilidadesMonth ? (params.utilidades || 0) : 0;
+      // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
+      const utilidades = (month === params.utilidadesMonth && month >= params.calculationMonth) ? (params.utilidades || 0) : 0;
       
       // Calculate CTS (Mayo y Noviembre por defecto)
       let cts = 0;
       let ctsDetail: Partial<{
         ctsBase: number;
-        ctsDias: number;
-        ctsTotal: number;
+        dias: number;
+        total: number;
       }> | null = null;
       
       if (params.ctsMonth && month === params.ctsMonth && (params.cts || 0) > 0) {
         // Mes personalizado especificado Y con valor mayor a 0
-        cts = params.cts || 0;
+        // CORRECCIÓN: Solo considerar si el mes está dentro del período de cálculo
+        if (month >= params.calculationMonth) {
+          cts = params.cts || 0;
+        }
       } else if (calculateCTS && (month === 5 || month === 11)) {
         // Calcular automáticamente si está marcado el checkbox
-        // Y solo si el trabajador ya estaba trabajando en ese mes
-        if (month >= startWorkMonth) {
-          const ctsCalc = this.calculateCTS(month, params.monthlyIncome, startWorkMonth);
+        // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
+        if (month >= params.calculationMonth) {
+          const ctsCalc = this.calculateCTS(month, params.monthlyIncome, params.calculationMonth);
           cts = ctsCalc.total;
           ctsDetail = {
             ctsBase: ctsCalc.base,
-            ctsDias: ctsCalc.dias,
-            ctsTotal: ctsCalc.total
+            dias: ctsCalc.dias,
+            total: ctsCalc.total
           };
         }
       }
@@ -514,26 +710,34 @@ export class SunatCalculator {
       if (calculateAsignacionFamiliar) {
         if (params.asignacionFamiliar && params.asignacionFamiliar > 0) {
           // Valor personalizado especificado
-          asignacionFamiliarMensual = params.asignacionFamiliar;
+          // CORRECCIÓN: Solo considerar si el mes está dentro del período de cálculo
+          if (month >= params.calculationMonth) {
+            asignacionFamiliarMensual = params.asignacionFamiliar;
+          }
         } else {
           // Calcular automáticamente
-          if (hasChildren && childrenCount > 0) {
-            asignacionFamiliarMensual = this.ASIGNACION_FAMILIAR_2025 * childrenCount;
-          } else if (childrenStudying && childrenCount > 0) {
-            asignacionFamiliarMensual = this.ASIGNACION_FAMILIAR_2025 * childrenCount;
+          // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
+          if (month >= params.calculationMonth) {
+            if (hasChildren && childrenCount > 0) {
+              asignacionFamiliarMensual = this.ASIGNACION_FAMILIAR_2025 * childrenCount;
+            } else if (childrenStudying && childrenCount > 0) {
+              asignacionFamiliarMensual = this.ASIGNACION_FAMILIAR_2025 * childrenCount;
+            }
           }
         }
       }
       
       // Calcular aguinaldo para sector público (solo en julio)
       let aguinaldo = 0;
-      if (isPublicSectorWorker && month === 7) {
+      // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
+      if (isPublicSectorWorker && month === 7 && month >= params.calculationMonth) {
         aguinaldo = this.AGUINALDO_PUBLICO;
       }
       
       // Calcular bono por escolaridad para sector público (mensual)
       let bonoEscolaridad = 0;
-      if (isPublicSectorWorker && receivesSchoolingBonus) {
+      // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
+      if (isPublicSectorWorker && receivesSchoolingBonus && month >= params.calculationMonth) {
         bonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
       }
       
@@ -543,7 +747,7 @@ export class SunatCalculator {
       // Calcular retención mensual según metodología SUNAT
       const monthlyRetention = this.calculateMonthlyRetention(
         month,
-        projectedAnnualTax,
+        finalAnnualTax, // Pass finalAnnualTax
         accumulatedRetentions,
         params.calculationMonth,
         monthlyCalculations
@@ -551,14 +755,23 @@ export class SunatCalculator {
       
       // Calcular retención adicional por ingresos extraordinarios (PASO 5 SUNAT)
       // Considerar TODOS los tipos de ingresos extraordinarios para el cálculo
+      // Según SUNAT: participaciones, reintegros, gratificaciones extraordinarias, bonificaciones, utilidades, CTS, etc.
       const extraordinaryIncome = additionalIncome + bonificaciones + utilidades + gratificaciones + cts + aguinaldo + bonoEscolaridad;
+      
+      // PASO 5: Calcular retención adicional por ingresos extraordinarios
+      // ===================================================================
+      // Se aplica la metodología SUNAT para determinar el impuesto adicional sobre ingresos extraordinarios
+      // siguiendo el procedimiento establecido en la normativa
       const additionalMonthlyRetention = this.calculateAdditionalMonthlyRetention(
         month,
-        projectedAnnualTax,
-        extraordinaryIncome,
-        totalProjectedAnnualIncome,
-        projectedNetIncome,
-        monthlyRetention // Pasar la retención ordinaria ya calculada
+        finalAnnualTax, // Impuesto anual final después de créditos (Paso 3)
+        extraordinaryIncome, // Ingresos extraordinarios del mes
+        totalProjectedAnnualIncome, // RBA total proyectada (Paso 1)
+        finalNetIncome, // Ingreso neto final después de deducciones (Paso 2)
+        monthlyRetention, // Retención ordinaria ya calculada (Paso 4)
+        rbaFullYear, // RBA del Paso 1
+        deduction7UIT, // Deducción de 7 UIT del Paso 2
+        totalTaxCredits // Total de créditos del Paso 3
       );
       
       // IMPORTANTE: Las retenciones adicionales NO se suman a las ordinarias para el límite del impuesto anual
@@ -597,7 +810,7 @@ export class SunatCalculator {
         asignacionFamiliar: asignacionFamiliarMensual,
         totalMonthlyIncome,
         projectedAccumulatedIncome: totalProjectedAnnualIncome,
-        projectedNetIncome,
+        projectedNetIncome: finalNetIncome, // Usar finalNetIncome aquí
         projectedTax: projectedAnnualTax,
         expectedAccumulatedRetention: accumulatedRetentions,
         previousAccumulatedRetention: accumulatedRetentions - totalMonthlyRetention,
@@ -725,7 +938,7 @@ export class SunatCalculator {
         totalUtilidades: params.utilidades || 0,
         totalCTS,
         totalAsignacionFamiliar: params.asignacionFamiliar ? (params.asignacionFamiliar * 12) : (asignacionFamiliar * 12),
-        totalAdditionalIncome: this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth) + totalGratificaciones + (params.bonificaciones || 0) + (params.utilidades || 0) + totalCTS + asignacionFamiliar,
+        totalAdditionalIncome: this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth, params.calculationMonth) + totalGratificaciones + (params.bonificaciones || 0) + (params.utilidades || 0) + totalCTS + asignacionFamiliar,
         gratificacionesCalculadas,
         ctsCalculadas,
         // Campos para contratos de duración limitada
@@ -738,26 +951,43 @@ export class SunatCalculator {
         totalAguinaldo,
         // Campo para bono por escolaridad del sector público
         receivesSchoolingBonus: params.receivesSchoolingBonus,
-        totalBonoEscolaridad
+        totalBonoEscolaridad,
+        // PASO 2: Información sobre donaciones y deducción de 7 UIT
+        deduction7UIT: this.DEDUCTION_7_UIT,
+        donations: params.donations || 0,
+        donationsDeduction: 0, // No se calcula aquí, se hace en el cálculo final
+        finalNetIncome: finalNetIncome, // Usar la variable calculada en el Paso 2
+        // PASO 3: Información sobre impuesto anual y créditos del Artículo 88°
+        projectedAnnualTax: projectedAnnualTax,
+        totalTaxCredits: totalTaxCredits, // Ahora se calcula aquí
+        finalAnnualTax: finalAnnualTax, // Ahora se calcula aquí
+        taxCreditsBreakdown: {
+          previousCredits: params.previousTaxCredits || 0,
+          previousPayments: params.previousTaxPayments || 0,
+          previousRefunds: params.previousTaxRefunds || 0
+        },
+        isOnlyFifthCategoryIncome: params.isOnlyFifthCategoryIncome || false
       }
     };
   }
 
   /**
    * Calcula la retención mensual según la metodología de SUNAT
+   * PASO 4: Fraccionamiento del impuesto anual en retenciones mensuales
    * Considera las retenciones previas y distribuye el impuesto anual de manera progresiva
+   * según la metodología establecida por SUNAT
    */
   private calculateMonthlyRetention(
     month: number,
-    projectedAnnualTax: number,
+    finalAnnualTax: number, // Cambiar a finalAnnualTax (después de créditos)
     accumulatedRetentions: number,
     calculationMonth: number,
     monthlyCalculations: MonthlyCalculation[]
   ): number {
     let monthlyRetention = 0;
     
-    // Si no hay impuesto anual proyectado, no hay retención mensual
-    if (projectedAnnualTax <= 0) {
+    // Si no hay impuesto anual final, no hay retención mensual
+    if (finalAnnualTax <= 0) {
       return 0;
     }
     
@@ -766,94 +996,138 @@ export class SunatCalculator {
       return 0;
     }
     
-    // Si las retenciones previas ya exceden el impuesto anual proyectado, no hay retención mensual
-    if (accumulatedRetentions >= projectedAnnualTax) {
+    // Si las retenciones previas ya exceden el impuesto anual final, no hay retención mensual
+    if (accumulatedRetentions >= finalAnnualTax) {
       return 0;
     }
     
-    // Aplicar metodología SUNAT exacta según el mes
+    // PASO 4: Aplicar metodología SUNAT exacta según el mes
+    // El fraccionamiento se hace de manera progresiva para distribuir la carga tributaria
+    
     if (month === 1 || month === 2 || month === 3) {
-      // Enero, Febrero y Marzo: Impuesto Anual Proyectado(IAP) ÷ 12
-      monthlyRetention = projectedAnnualTax / 12;
+      // 1. Enero, Febrero y Marzo: Impuesto Anual Final ÷ 12
+      // Se distribuye uniformemente en los primeros tres meses
+      monthlyRetention = finalAnnualTax / 12;
     } else if (month === 4) {
-      // Abril: (IAP - Retenciones efectuadas de enero a marzo) ÷ 9
-      // Calcular retenciones acumuladas hasta marzo
+      // 2. Abril: (IAF - Retenciones enero-marzo) ÷ 9
+      // Se deducen las retenciones ya efectuadas y se distribuye el resto en 9 meses
       const retentionsJanToMar = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 3);
-      const remainingTax = projectedAnnualTax - retentionsJanToMar;
+      const remainingTax = finalAnnualTax - retentionsJanToMar;
       monthlyRetention = remainingTax / 9;
     } else if (month === 5 || month === 6 || month === 7) {
-      // Mayo, Junio y Julio: (IAP - Retenciones efectuadas de enero a abril) ÷ 8
-      // Calcular retenciones acumuladas hasta abril
+      // 3. Mayo, Junio y Julio: (IAF - Retenciones enero-abril) ÷ 8
+      // Se deducen las retenciones ya efectuadas y se distribuye el resto en 8 meses
       const retentionsJanToApr = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 4);
-      const remainingTax = projectedAnnualTax - retentionsJanToApr;
+      const remainingTax = finalAnnualTax - retentionsJanToApr;
       monthlyRetention = remainingTax / 8;
     } else if (month === 8) {
-      // Agosto: (IAP - Retenciones efectuadas de enero a julio) ÷ 5
-      // Calcular retenciones acumuladas hasta julio
+      // 4. Agosto: (IAF - Retenciones enero-julio) ÷ 5
+      // Se deducen las retenciones ya efectuadas y se distribuye el resto en 5 meses
       const retentionsJanToJul = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 7);
-      const remainingTax = projectedAnnualTax - retentionsJanToJul;
+      const remainingTax = finalAnnualTax - retentionsJanToJul;
       monthlyRetention = remainingTax / 5;
     } else if (month === 9 || month === 10 || month === 11) {
-      // Setiembre, Octubre y Noviembre: (IAP - Retenciones efectuadas de enero a agosto) ÷ 4
-      // Calcular retenciones acumuladas hasta agosto
+      // 5. Setiembre, Octubre y Noviembre: (IAF - Retenciones enero-agosto) ÷ 4
+      // Se deducen las retenciones ya efectuadas y se distribuye el resto en 4 meses
       const retentionsJanToAug = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 8);
-      const remainingTax = projectedAnnualTax - retentionsJanToAug;
+      const remainingTax = finalAnnualTax - retentionsJanToAug;
       monthlyRetention = remainingTax / 4;
     } else if (month === 12) {
-      // Diciembre: (IAP - Retenciones efectuadas de enero a noviembre)
-      // Calcular retenciones acumuladas hasta noviembre
+      // 6. Diciembre: Ajuste final del Impuesto
+      // Se deducen las retenciones efectuadas de enero a noviembre
+      // El resultado es la retención final para completar el impuesto anual
       const retentionsJanToNov = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 11);
-      monthlyRetention = projectedAnnualTax - retentionsJanToNov;
+      monthlyRetention = finalAnnualTax - retentionsJanToNov;
     }
     
     // Asegurar que la retención no sea negativa
+    // Si las retenciones previas exceden el impuesto, no hay retención adicional
     return Math.max(0, this.round(monthlyRetention, 2));
   }
 
   /**
    * Calcula la retención adicional mensual para ingresos extraordinarios
-   * Según el PASO 5 de la metodología SUNAT
+   * PASO 5 SUNAT: Retenciones por ingresos extraordinarios según metodología establecida
+   * 
+   * Procedimiento según SUNAT:
+   * 1. Se aplican los Pasos a) al d) para determinar el impuesto sobre remuneraciones ordinarias
+   * 2. Se suma el monto adicional obtenido del siguiente procedimiento:
+   *    i) Al resultado de aplicar los Pasos a) y b) se suma el monto adicional del mes
+   *    ii) Se aplican las tasas del Artículo 53° a la suma obtenida
+   *    iii) Se deduce el monto calculado en el Paso c) (créditos)
+   *    iv) El resultado es la retención adicional del mes
    */
   private calculateAdditionalMonthlyRetention(
     month: number,
-    projectedAnnualTax: number,
+    finalAnnualTax: number, // Impuesto anual final después de créditos
     monthlyExtraordinaryIncome: number,
     projectedAnnualIncome: number,
-    projectedNetIncome: number,
-    monthlyRetention: number // Retención ordinaria ya calculada en el Paso 4
+    finalNetIncome: number, // Ingreso neto final después de deducciones
+    monthlyRetention: number, // Retención ordinaria ya calculada en el Paso 4
+    rbaFullYear: number, // RBA del Paso 1
+    deduction7UIT: number, // Deducción de 7 UIT del Paso 2
+    totalTaxCredits: number // Total de créditos del Paso 3
   ): number {
     // Si no hay ingresos extraordinarios, no hay retención adicional
     if (monthlyExtraordinaryIncome <= 0) {
       return 0;
     }
 
-    // Si no hay impuesto anual proyectado, no hay retención adicional
-    if (projectedAnnualTax <= 0) {
+    // Si no hay impuesto anual final, no hay retención adicional
+    if (finalAnnualTax <= 0) {
       return 0;
     }
 
-    // PASO 5.1: Identificar el importe adicional
-    // Se toma el monto por pagos distintos a la remuneración o gratificación ordinaria
+    // PASO 5: Aplicar metodología SUNAT para ingresos extraordinarios
     
-    // PASO 5.2: Multiplicar por la tasa de impuesto correspondiente
-    // El importe adicional se multiplica por la tasa que corresponda según el tramo
-    // en el que se ubique la remuneración neta anual proyectada
-    const effectiveTaxRate = this.calculateEffectiveTaxRateByTramo(projectedNetIncome);
-    const taxOnExtraordinaryIncome = monthlyExtraordinaryIncome * effectiveTaxRate;
+    // PASO 5.1: Aplicar los Pasos a) al d) para remuneraciones ordinarias
+    // Esto ya se hizo en el cálculo de monthlyRetention (Paso 4)
     
-    // PASO 5.3: La retención adicional es el impuesto total sobre el ingreso extraordinario
-    // NO se resta la retención ordinaria, se suma a ella
-    const additionalRetention = taxOnExtraordinaryIncome;
+    // PASO 5.2: Calcular retención adicional siguiendo el procedimiento SUNAT
     
-    // PASO 5.4: Obtener la Retención Adicional del mes
-    // Esta se sumará a la retención ordinaria para obtener el total
+    // PASO 5.2.i: Al resultado de aplicar los Pasos a) y b) se suma el monto adicional del mes
+    // Paso a) = RBA del Paso 1
+    // Paso b) = Deducción de 7 UIT del Paso 2
+    // Se suma el ingreso extraordinario del mes
+    const incomeWithExtraordinary = rbaFullYear + monthlyExtraordinaryIncome;
+    
+    // PASO 5.2.ii: A la suma obtenida se le aplican las tasas del Artículo 53°
+    // Primero se resta la deducción de 7 UIT para obtener el ingreso neto
+    const netIncomeWithExtraordinary = Math.max(0, incomeWithExtraordinary - deduction7UIT);
+    
+    // Se aplican las tasas progresivas del Artículo 53°
+    const effectiveTaxRate = this.calculateEffectiveTaxRateByTramo(netIncomeWithExtraordinary);
+    const taxOnIncomeWithExtraordinary = netIncomeWithExtraordinary * effectiveTaxRate;
+    
+    // PASO 5.2.iii: Del resultado se deduce el monto calculado en el Paso c) (créditos)
+    // Los créditos se aplican proporcionalmente al ingreso extraordinario
+    const proportionalCredits = totalTaxCredits > 0 ? 
+      (monthlyExtraordinaryIncome / rbaFullYear) * totalTaxCredits : 0;
+    
+    const taxAfterCredits = Math.max(0, taxOnIncomeWithExtraordinary - proportionalCredits);
+    
+    // PASO 5.2.iv: El resultado es la retención adicional del mes
+    // Esta retención se suma a la ordinaria para obtener el total
+    const additionalRetention = taxAfterCredits;
+    
     return this.round(additionalRetention, 2);
   }
 
   /**
    * Calcula la tasa efectiva de impuesto según el tramo correspondiente
    * Basado en la proyección de ingresos anuales (RNA)
-   * Según las escalas progresivas de SUNAT
+   * Según las escalas progresivas de SUNAT del Artículo 53° de la Ley
+   * 
+   * Este método se utiliza en:
+   * - PASO 3: Para calcular el impuesto anual proyectado
+   * - PASO 5: Para calcular la retención adicional por ingresos extraordinarios
+   * 
+   * Escalas de impuesto para el ejercicio 2025:
+   * - Hasta 5 UIT (S/ 26,750): 8%
+   * - Más de 5 UIT hasta 20 UIT (S/ 107,000): 14%
+   * - Más de 20 UIT hasta 35 UIT (S/ 187,250): 17%
+   * - Más de 35 UIT hasta 45 UIT (S/ 240,750): 20%
+   * - Más de 45 UIT: 30%
    */
   private calculateEffectiveTaxRateByTramo(projectedNetIncome: number): number {
     const uit = this.getUIT();
@@ -862,7 +1136,7 @@ export class SunatCalculator {
     const base35UIT = 35 * uit;    // S/ 187,250
     const base45UIT = 45 * uit;    // S/ 240,750
 
-    // Aplicar escalas progresivas según SUNAT
+    // Aplicar escalas progresivas según SUNAT del Artículo 53°
     if (projectedNetIncome <= base5UIT) {
       return 0.08; // 8% hasta 5 UIT
     } else if (projectedNetIncome <= base20UIT) {
@@ -1029,6 +1303,133 @@ export class SunatCalculator {
     };
   }
 
+  /**
+   * Valida las donaciones según la normativa SUNAT del Artículo 49°
+   * Las donaciones solo se pueden deducir en diciembre con motivo del ajuste final del impuesto
+   * Solo aplica para trabajadores que solo perciben rentas de quinta categoría
+   */
+  validateDonations(donations: number, calculationMonth: number): {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+    canDeduct: boolean;
+  } {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+    let canDeduct = false;
+
+    // Verificar que las donaciones no sean negativas
+    if (donations < 0) {
+      errors.push('Las donaciones no pueden ser negativas.');
+    }
+
+    // Verificar que las donaciones no excedan límites razonables
+    if (donations > 100000) {
+      warnings.push('El monto de donaciones parece muy alto. Verifica que corresponda a donaciones reales.');
+    }
+
+    // Según SUNAT: Las donaciones solo se pueden deducir en diciembre
+    // con motivo del ajuste final del impuesto
+    if (calculationMonth === 12) {
+      canDeduct = true;
+    } else {
+      warnings.push('Las donaciones solo se pueden deducir en diciembre con motivo del ajuste final del impuesto.');
+      canDeduct = false;
+    }
+
+    // Verificar que las donaciones estén documentadas
+    if (donations > 0) {
+      warnings.push('Las donaciones deben estar acreditadas con los documentos señalados en el Artículo 21° de la Ley.');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      canDeduct
+    };
+  }
+
+  /**
+   * Valida los créditos según la normativa SUNAT del Artículo 88°
+   * Los contribuyentes pueden deducir de su impuesto los conceptos siguientes:
+   * b) Pagos efectuados a cuenta del impuesto liquidado y créditos contra dicho tributo
+   * c) Saldos a favor reconocidos por SUNAT o establecidos por el contribuyente
+   */
+  validateTaxCredits(
+    previousTaxCredits: number,
+    previousTaxPayments: number,
+    previousTaxRefunds: number,
+    projectedAnnualTax: number
+  ): {
+    isValid: boolean;
+    errors: string[];
+    warnings: string[];
+    totalCredits: number;
+    excessCredits: number;
+  } {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // Verificar que los créditos no sean negativos
+    if (previousTaxCredits < 0) {
+      errors.push('Los créditos de declaraciones anteriores no pueden ser negativos.');
+    }
+
+    if (previousTaxPayments < 0) {
+      errors.push('Los pagos a cuenta del impuesto no pueden ser negativos.');
+    }
+
+    if (previousTaxRefunds < 0) {
+      errors.push('Los saldos a favor no pueden ser negativos.');
+    }
+
+    // Verificar límites razonables
+    if (previousTaxCredits > 100000) {
+      warnings.push('Los créditos de declaraciones anteriores parecen muy altos. Verifica la documentación.');
+    }
+
+    if (previousTaxPayments > 100000) {
+      warnings.push('Los pagos a cuenta del impuesto parecen muy altos. Verifica la documentación.');
+    }
+
+    if (previousTaxRefunds > 50000) {
+      warnings.push('Los saldos a favor parecen muy altos. Verifica que estén reconocidos por SUNAT.');
+    }
+
+    // Calcular total de créditos
+    const totalCredits = previousTaxCredits + previousTaxPayments + previousTaxRefunds;
+
+    // Verificar si los créditos exceden el impuesto proyectado
+    const excessCredits = Math.max(0, totalCredits - projectedAnnualTax);
+    if (excessCredits > 0) {
+      warnings.push(`Los créditos totales (S/ ${totalCredits}) exceden el impuesto proyectado (S/ ${projectedAnnualTax}). Se genera un saldo a favor de S/ ${excessCredits}.`);
+    }
+
+    // Verificar que los saldos a favor estén documentados
+    if (previousTaxRefunds > 0) {
+      warnings.push('Los saldos a favor deben estar reconocidos por SUNAT o establecidos en declaraciones juradas anteriores no impugnadas.');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      totalCredits,
+      excessCredits
+    };
+  }
+
+  /**
+   * Calcula las retenciones acumuladas hasta un mes específico
+   * PASO 4: Método auxiliar para el fraccionamiento del impuesto anual
+   * Se utiliza para calcular las retenciones ya efectuadas en períodos anteriores
+   * y determinar la retención mensual correspondiente según la metodología SUNAT
+   * 
+   * @param monthlyCalculations Array de cálculos mensuales ya procesados
+   * @param monthIndex Mes hasta el cual calcular las retenciones acumuladas (1-based index)
+   * @returns Total de retenciones acumuladas hasta el mes especificado
+   */
   private calculateAccumulatedRetentionsUpToMonth(monthlyCalculations: MonthlyCalculation[], monthIndex: number): number {
     let accumulatedRetentions = 0;
     
@@ -1036,7 +1437,8 @@ export class SunatCalculator {
     for (let i = 0; i < monthlyCalculations.length; i++) {
       const calc = monthlyCalculations[i];
       if (calc && calc.month <= monthIndex) {
-        // Sumar solo la retención ordinaria (PASO 4), no la adicional
+        // Sumar solo la retención ordinaria (PASO 4), no la adicional (PASO 5)
+        // Esto es importante porque el fraccionamiento se basa en retenciones ordinarias
         accumulatedRetentions += calc.monthlyRetention - (calc.additionalMonthlyRetention || 0);
       }
     }
