@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { SunatCalculator, SunatCalculationResult, DeductibleExpenses } from '@/lib/sunat-calculator';
 import { Calculator, ArrowLeft, TrendingUp, Receipt } from 'lucide-react';
 
-export default function DeductiblesPage() {
+function DeductiblesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [originalResult, setOriginalResult] = useState<SunatCalculationResult | null>(null);
@@ -408,7 +408,7 @@ export default function DeductiblesPage() {
                     </span>
                   </div>
                   <div className="flex justify-between border-t pt-2">
-                    <span className="text-sm font-medium text-[#333333]">Reducción Mensual Promedio:</span>
+                    <span className="text-sm text-[#333333]">Reducción Mensual Promedio:</span>
                     <span className="font-bold text-[#2E7D32]">
                       {formatCurrency((originalResult.summary.averageMonthlyRetention - recalculatedResult.summary.averageMonthlyRetention))}
                     </span>
@@ -433,5 +433,13 @@ export default function DeductiblesPage() {
         </Card>
       )}
     </div>
+  );
+}
+
+export default function DeductiblesPage() {
+  return (
+    <Suspense fallback={<div className="container mx-auto px-4 py-8">Cargando...</div>}>
+      <DeductiblesContent />
+    </Suspense>
   );
 }
