@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Info, Gift, CreditCard, FileText, AlertCircle } from 'lucide-react';
-import { useEffect } from 'react';
 
 // Import the form data type from the parent component
 type FormData = {
@@ -71,43 +70,8 @@ interface TaxCreditsStepProps {
 }
 
 export function TaxCreditsStep({ form }: TaxCreditsStepProps) {
-  console.log('🎭 TaxCreditsStep renderizado');
-  console.log('  • Form data:', form.getValues());
-  console.log('  • Form state:', form.formState);
-  
-  // Verificar que no haya eventos automáticos
-  useEffect(() => {
-    console.log('🔍 TaxCreditsStep: useEffect ejecutado');
-    console.log('  • Verificando que no haya eventos automáticos...');
-    
-    // Verificar el estado del formulario
-    const subscription = form.watch((value, { name, type }) => {
-      console.log('👀 TaxCreditsStep: Form field changed', { name, type, value });
-    });
-    
-    return () => subscription.unsubscribe();
-  }, [form]);
-  
   return (
     <div className="space-y-6">
-      {/* Debug Info */}
-      <div className="bg-blue-100 p-4 rounded-lg border border-blue-300">
-        <h3 className="font-bold text-blue-800 mb-2">🔧 DEBUG: TaxCreditsStep Renderizado</h3>
-        <p className="text-blue-700 text-sm">
-          Este es el Paso 4 del formulario. Si puedes ver esto, el componente se está renderizando correctamente.
-        </p>
-        <p className="text-blue-700 text-sm mt-2">
-          Paso actual: 4 | Total pasos: 4
-        </p>
-        <div className="mt-3 p-2 bg-blue-200 rounded text-xs">
-          <p><strong>Estado del formulario:</strong></p>
-          <p>• isValid: {form.formState.isValid ? 'Sí' : 'No'}</p>
-          <p>• isDirty: {form.formState.isDirty ? 'Sí' : 'No'}</p>
-          <p>• isSubmitting: {form.formState.isSubmitting ? 'Sí' : 'No'}</p>
-          <p>• isSubmitted: {form.formState.isSubmitted ? 'Sí' : 'No'}</p>
-        </div>
-      </div>
-
       {/* Paso 2: Donaciones */}
       <Card className="border-[#E0E0E0] shadow-sm">
         <CardHeader className="bg-[#4CAF50] text-white">

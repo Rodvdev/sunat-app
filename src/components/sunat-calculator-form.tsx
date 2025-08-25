@@ -95,23 +95,8 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
   const [isCalculating, setIsCalculating] = useState(false);
   const router = useRouter();
 
-  console.log('🚀 COMPONENTE INICIALIZADO');
-  console.log('  • Estado inicial - currentStep:', currentStep);
-  console.log('  • Estado inicial - isCalculating:', isCalculating);
-
-  // Logging adicional para detectar cambios de estado
-  useEffect(() => {
-    console.log('🔄 ESTADO CAMBIADO - currentStep:', currentStep);
-  }, [currentStep]);
-
-  useEffect(() => {
-    console.log('🔄 ESTADO CAMBIADO - isCalculating:', isCalculating);
-  }, [isCalculating]);
-
   // Update step information when step changes
   useEffect(() => {
-    console.log('🔄 ACTUALIZANDO INFORMACIÓN DEL PASO:', currentStep);
-    
     const stepInfo = {
       1: {
         title: 'Información Básica',
@@ -140,14 +125,10 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
     };
 
     const currentStepInfo = stepInfo[currentStep as keyof typeof stepInfo];
-    console.log('  • Información del paso:', currentStepInfo);
-    
     onStepChange(currentStepInfo);
     
     // Scroll to top whenever step changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    console.log('✅ INFORMACIÓN DEL PASO ACTUALIZADA');
   }, [currentStep, onStepChange]);
 
   // Initialize step information on component mount
@@ -212,23 +193,12 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
   });
 
   const onSubmit = async (data: FormData) => {
-    console.log('🚀 FORMULARIO ENVIADO - PASO ACTUAL:', currentStep);
-    console.log('  • ¿Se debería enviar en este paso?', currentStep === 4 ? 'SÍ' : 'NO');
-    console.log('  • Datos del formulario:', data);
-    
     if (currentStep !== 4) {
-      console.error('❌ ERROR: El formulario se está enviando en el paso', currentStep, 'en lugar del paso 4');
-      console.error('  • Esto NO debería suceder. Verificando la causa...');
-      
-      // Prevenir el envío y mostrar error
       alert(`Error: El formulario se está enviando en el paso ${currentStep} en lugar del paso 4. Por favor, completa todos los pasos.`);
-      
-      // Forzar el paso correcto
       setCurrentStep(4);
       return;
     }
     
-    console.log('✅ FORMULARIO ENVIADO CORRECTAMENTE en el paso 4');
     setIsCalculating(true);
     
     try {
@@ -302,34 +272,6 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
       console.log('  • Asignación Familiar Personalizada:', data.asignacionFamiliar);
       console.log('  • Mes de Asignación Familiar:', data.asignacionFamiliarMonth);
       
-      console.log('\n🏠 GASTOS DEDUCIBLES:');
-      console.log('  • Restaurantes:', data.restaurants);
-      console.log('  • Servicios Médicos:', data.medicalServices);
-      console.log('  • Servicios Profesionales:', data.professionalServices);
-      console.log('  • Propiedades de Alquiler:', data.rentalProperties);
-      console.log('  • Contribuciones EsSalud:', data.essaludContributions);
-      
-      // PASO 2: Logging para donaciones
-      console.log('\n🎁 PASO 2 - DONACIONES (Artículo 49° de la Ley):');
-      console.log('  • Monto de Donaciones:', data.donations);
-      console.log('  • Nota: Las donaciones solo se pueden deducir en diciembre con motivo del ajuste final');
-      console.log('  • Solo aplica para trabajadores que perciben rentas de quinta categoría');
-      
-      // PASO 3: Logging para créditos
-      console.log('\n💳 PASO 3 - CRÉDITOS (Artículo 88° de la Ley):');
-      console.log('  • Créditos de Declaraciones Anteriores:', data.previousTaxCredits);
-      console.log('  • Pagos a Cuenta del Impuesto:', data.previousTaxPayments);
-      console.log('  • Saldos a Favor Reconocidos:', data.previousTaxRefunds);
-      console.log('  • Solo Renta de Quinta Categoría:', data.isOnlyFifthCategoryIncome);
-      console.log('  • Nota: Los créditos se deducen del impuesto anual proyectado');
-      
-      console.log('\n🎯 RESUMEN DE TODOS LOS PASOS:');
-      console.log('  • PASO 1: RBA proyectada y ingresos adicionales');
-      console.log('  • PASO 2: Deducción de 7 UIT y donaciones');
-      console.log('  • PASO 3: Aplicación de tasas del Artículo 53° y créditos del Artículo 88°');
-      console.log('  • PASO 4: Fraccionamiento del impuesto anual en retenciones mensuales');
-      console.log('  • PASO 5: Retenciones adicionales por ingresos extraordinarios');
-      
       const calculator = new SunatCalculator();
       
       // Prepare deductible expenses if any are provided
@@ -341,47 +283,34 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
         essaludContributions: data.essaludContributions
       };
 
-      console.log('\n🔍 VALIDANDO GASTOS DEDUCIBLES...');
       // Validate deductible expenses
       const validation = calculator.validateDeductibleExpenses(deductibleExpenses);
       if (!validation.isValid) {
-        console.error('❌ ERRORES EN GASTOS DEDUCIBLES:', validation.errors);
-        console.error('⚠️ ADVERTENCIAS:', validation.warnings);
         alert('Errores en gastos deducibles:\n' + validation.errors.join('\n'));
         setIsCalculating(false);
         return;
       }
-      
-      console.log('✅ GASTOS DEDUCIBLES VÁLIDOS');
-      if (validation.warnings.length > 0) {
-        console.warn('⚠️ ADVERTENCIAS:', validation.warnings);
-      }
 
-      console.log('\n⚡ VALIDACIONES ADICIONALES...');
       // Validaciones adicionales
       if (data.calculateGratificaciones && data.startWorkMonth > 7) {
-        console.error('❌ ERROR: Mes de inicio debe ser antes de Julio para gratificaciones');
         alert('Si calculas gratificaciones automáticamente, el mes de inicio debe ser antes de Julio para recibir gratificaciones en Julio.');
         setIsCalculating(false);
         return;
       }
 
       if (data.calculateCTS && data.startWorkMonth > 5) {
-        console.error('❌ ERROR: Mes de inicio debe ser antes de Mayo para CTS');
         alert('Si calculas CTS automáticamente, el mes de inicio debe ser antes de Mayo para recibir CTS en Mayo.');
         setIsCalculating(false);
         return;
       }
 
       if (data.calculateAsignacionFamiliar && !data.hasChildren && !data.childrenStudying) {
-        console.error('❌ ERROR: Debe tener hijos para asignación familiar');
         alert('Para calcular asignación familiar automáticamente, debes tener hijos menores de 18 años o hijos estudiando.');
         setIsCalculating(false);
         return;
       }
 
       if (data.calculateAsignacionFamiliar && data.hasChildren && data.childrenCount === 0) {
-        console.error('❌ ERROR: Debe especificar número de hijos');
         alert('Si tienes hijos menores de 18 años, debes especificar el número de hijos.');
         setIsCalculating(false);
         return;
@@ -390,14 +319,12 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
       // Validaciones para contratos de duración limitada
       if (data.isLimitedContract && data.contractEndMonth) {
         if (data.contractEndMonth < data.startWorkMonth) {
-          console.error('❌ ERROR: El mes de terminación debe ser posterior al mes de inicio');
           alert('El mes de terminación del contrato debe ser posterior al mes de inicio de trabajo.');
           setIsCalculating(false);
           return;
         }
         
         if (data.contractEndMonth > 12) {
-          console.error('❌ ERROR: El mes de terminación no puede ser mayor a 12');
           alert('El mes de terminación del contrato no puede ser mayor a diciembre (12).');
           setIsCalculating(false);
           return;
@@ -407,52 +334,28 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
       // Validaciones para bono extraordinario judicial
       if (data.isJudicialWorker) {
         if (!data.judicialInstitution) {
-          console.error('❌ ERROR: Debe seleccionar la institución judicial');
           alert('Si marca bono judicial, debe seleccionar la institución donde trabaja.');
           setIsCalculating(false);
           return;
         }
         
         if (data.isDirectivePosition) {
-          console.error('❌ ERROR: Los cargos directivos no reciben bono extraordinario');
           alert('Los cargos directivos del Poder Judicial, INPE y Ministerio Público NO reciben el bono extraordinario de S/ 1,000.');
           setIsCalculating(false);
           return;
         }
         
         if (data.monthlyIncome >= 2000) {
-          console.error('❌ ERROR: El bono judicial solo aplica para ingresos menores a S/ 2,000');
           alert('El bono extraordinario judicial de S/ 1,000 solo aplica para personal con ingresos menores a S/ 2,000.');
           setIsCalculating(false);
           return;
         }
       }
       
-      console.log('✅ TODAS LAS VALIDACIONES PASARON');
-
-      console.log('\n🧮 EJECUTANDO CÁLCULO SUNAT...');
-      console.log('='.repeat(80));
-      
       const calculationResult = calculator.calculate({
         ...data,
         deductibleExpenses,
       });
-      
-      console.log('🎯 RESULTADO DEL CÁLCULO COMPLETO:');
-      console.log('='.repeat(80));
-      console.log('📊 RESUMEN ANUAL:');
-      console.log('  • RBA:', calculationResult.summary.totalAnnualIncome);
-      console.log('  • Ingresos Adicionales:', calculationResult.summary.totalAdditionalIncome);
-      console.log('  • Impuesto Anual Total:', calculationResult.summary.totalAnnualTax);
-      console.log('  • Retención Anual Total:', calculationResult.summary.totalAnnualRetention);
-      console.log('  • Retención Mensual Promedio:', calculationResult.summary.averageMonthlyRetention);
-      
-      console.log('\n💰 DESGLOSE DE INGRESOS ADICIONALES:');
-      console.log('  • Total Gratificaciones:', calculationResult.summary.totalGratificaciones);
-      console.log('  • Total Bonificaciones:', calculationResult.summary.totalBonificaciones);
-      console.log('  • Total Utilidades:', calculationResult.summary.totalUtilidades);
-      console.log('  • Total CTS:', calculationResult.summary.totalCTS);
-      console.log('  • Total Asignación Familiar:', calculationResult.summary.totalAsignacionFamiliar);
       
       console.log('\n🏠 GASTOS DEDUCIBLES:');
       console.log('  • Total Gastos:', calculationResult.summary.deductibleExpenses.totalExpenses);
@@ -552,57 +455,33 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
   };
 
   const nextStep = () => {
-    console.log('🔄 NAVEGACIÓN: Intentando ir al siguiente paso');
-    console.log('  • Paso actual:', currentStep);
-    console.log('  • Total de pasos:', 4);
-    
     if (currentStep < 4) {
       const nextStepNumber = currentStep + 1;
-      console.log('  • Siguiente paso:', nextStepNumber);
       setCurrentStep(nextStepNumber);
       
       // Additional scroll to top for immediate feedback
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      
-      console.log('✅ NAVEGACIÓN: Paso actualizado exitosamente');
-    } else {
-      console.log('⚠️ NAVEGACIÓN: Ya estás en el último paso');
     }
   };
 
   const prevStep = () => {
-    console.log('🔄 NAVEGACIÓN: Intentando ir al paso anterior');
-    console.log('  • Paso actual:', currentStep);
-    
     if (currentStep > 1) {
       const prevStepNumber = currentStep - 1;
-      console.log('  • Paso anterior:', prevStepNumber);
       setCurrentStep(prevStepNumber);
-      
-      console.log('✅ NAVEGACIÓN: Paso anterior establecido exitosamente');
-    } else {
-      console.log('⚠️ NAVEGACIÓN: Ya estás en el primer paso');
     }
   };
 
   const renderStep = () => {
-    console.log('🎭 RENDERIZANDO PASO:', currentStep);
-    
     switch (currentStep) {
       case 1:
-        console.log('  • Renderizando: BasicInfoStep');
         return <BasicInfoStep form={form} />;
       case 2:
-        console.log('  • Renderizando: AdditionalIncomeStep');
         return <AdditionalIncomeStep form={form} />;
       case 3:
-        console.log('  • Renderizando: DeductibleExpensesStep');
         return <DeductibleExpensesStep form={form} />;
       case 4:
-        console.log('  • Renderizando: TaxCreditsStep');
         return <TaxCreditsStep form={form} />;
       default:
-        console.log('  • Renderizando: BasicInfoStep (default)');
         return <BasicInfoStep form={form} />;
     }
   };
@@ -622,7 +501,6 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
         <Form {...form}>
           <form className="space-y-8" onSubmit={(e) => {
             e.preventDefault(); // Prevenir envío automático
-            console.log('🚫 FORMULARIO PREVENIDO - Envío automático bloqueado');
           }}>
             {/* Step Indicator */}
             <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -674,46 +552,12 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
                   <Button 
                     type="button" 
                     onClick={() => {
-                      console.log('🔘 BOTÓN CALCULAR PRESIONADO MANUALMENTE');
-                      console.log('  • Paso actual:', currentStep);
-                      console.log('  • Ejecutando onSubmit...');
                       form.handleSubmit(onSubmit)();
                     }}
                     className="bg-[#B71C1C] hover:bg-[#C62828] border-0" 
                     disabled={isCalculating}
                   >
                     {isCalculating ? 'Calculando...' : 'Calcular Retenciones'}
-                  </Button>
-                )}
-                
-                {/* Debug Button - Temporal */}
-                {process.env.NODE_ENV === 'development' && (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      console.log('🔧 DEBUG: Forzando navegación al paso 4');
-                      setCurrentStep(4);
-                    }}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs"
-                  >
-                    Debug: Paso 4
-                  </Button>
-                )}
-                
-                {/* Debug Button - Estado del Formulario */}
-                {process.env.NODE_ENV === 'development' && (
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      console.log('🔍 DEBUG: Estado del formulario');
-                      console.log('  • currentStep:', currentStep);
-                      console.log('  • isCalculating:', isCalculating);
-                      console.log('  • Form values:', form.getValues());
-                      console.log('  • Form state:', form.formState);
-                    }}
-                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs"
-                  >
-                    Debug: Estado
                   </Button>
                 )}
               </div>
