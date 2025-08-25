@@ -1,4 +1,4 @@
-import { Calculator, TrendingUp, Shield, BookOpen, HelpCircle } from 'lucide-react';
+import { Calculator, TrendingUp, Shield, BookOpen, HelpCircle, FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const documentationSections = [
@@ -157,7 +157,7 @@ export default function DocumentationPage() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="text-center border-[#E0E0E0] shadow-sm">
               <CardContent className="pt-6">
                 <Shield className="h-12 w-12 text-[#004C97] mx-auto mb-4" />
@@ -176,38 +176,24 @@ export default function DocumentationPage() {
               </CardContent>
             </Card>
             
-            <Card className="text-center border-[#E0E0E0] shadow-sm">
-              <CardContent className="pt-6">
-                <BookOpen className="h-12 w-12 text-[#2E7D32] mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-[#333333]">Normativa Fiscal</h3>
-                <p className="text-[#666666] mb-4">
-                  Consulta las leyes y reglamentos vigentes sobre impuestos a la renta en Perú
-                </p>
-                <a 
-                  href="https://www.gob.pe/institucion/sunat/normas-legales" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-[#2E7D32] hover:text-[#1B5E20] font-medium transition-colors duration-200"
-                >
-                  Ver Normativa →
-                </a>
-              </CardContent>
-            </Card>
+           
             
+           
+
             <Card className="text-center border-[#E0E0E0] shadow-sm">
               <CardContent className="pt-6">
-                <Calculator className="h-12 w-12 text-[#B71C1C] mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2 text-[#333333]">Calculadora Oficial</h3>
+                <FileText className="h-12 w-12 text-[#FF6F00] mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2 text-[#333333]">Guía de Cálculo</h3>
                 <p className="text-[#666666] mb-4">
-                  Utiliza la calculadora oficial de SUNAT para verificar tus cálculos
+                  Guía oficial de SUNAT para el cálculo del impuesto a la renta de quinta categoría
                 </p>
                 <a 
-                  href="https://www.sunat.gob.pe/descarga/calculo-impuesto-renta.html" 
+                  href="https://orientacion.sunat.gob.pe/3071-02-calculo-del-impuesto" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-[#B71C1C] hover:text-[#C62828] font-medium transition-colors duration-200"
+                  className="text-[#FF6F00] hover:text-[#E65100] font-medium transition-colors duration-200"
                 >
-                  Ir a Calculadora →
+                  Ver Guía →
                 </a>
               </CardContent>
             </Card>

@@ -305,7 +305,7 @@ describe('CTS Calculation Tests', () => {
         startWorkMonth: 1
       });
 
-      // Verificar que el CTS esté incluido en el ingreso anual total
+      // Verificar que el CTS esté incluido en el RBA
       expect(result.summary.totalCTS).toBeGreaterThan(0);
       expect(result.summary.totalAnnualIncome).toBeGreaterThan(5000 * 12); // Más que solo el sueldo base
     });

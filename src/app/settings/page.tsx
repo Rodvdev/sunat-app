@@ -178,7 +178,7 @@ export default function SettingsPage() {
         {/* Settings Categories */}
         <div className="space-y-8">
           {settingCategories.map((category) => (
-            <Card key={category.title} className="border-[#E0E0E0] shadow-sm">
+            <Card key={category.title} className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
               <CardHeader>
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-[#E3F2FD] rounded-lg">

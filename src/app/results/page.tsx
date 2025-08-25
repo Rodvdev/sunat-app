@@ -1,6 +1,6 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { SunatCalculatorResults } from '@/components/sunat-calculator-results';
 import { SunatCalculationResult } from '@/lib/sunat-calculator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,8 +8,10 @@ import { ArrowLeft, Calculator } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function ResultsPage() {
+// Component that uses useSearchParams
+function ResultsContent() {
   const searchParams = useSearchParams();
   const [result, setResult] = useState<SunatCalculationResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,7 +57,7 @@ export default function ResultsPage() {
   if (error || !result) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <Card className="border-[#E0E0E0] shadow-sm max-w-2xl mx-auto">
+        <Card className="border-[#E0E0E0] shadow-sm max-w-2xl mx-auto overflow-hidden px-6">
           <CardHeader className="bg-[#FFEBEE] text-center">
             <CardTitle className="text-[#B71C1C] flex items-center justify-center gap-2">
               <Calculator className="h-5 w-5" />
@@ -123,5 +125,27 @@ export default function ResultsPage() {
         </Button>
       </div>
     </div>
+  );
+}
+
+// Loading fallback component
+function ResultsLoading() {
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <Calculator className="h-12 w-12 text-[#004C97] mx-auto mb-4 animate-pulse" />
+          <p className="text-lg text-[#666666]">Cargando página...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={<ResultsLoading />}>
+      <ResultsContent />
+    </Suspense>
   );
 }

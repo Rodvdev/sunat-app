@@ -17,7 +17,7 @@ export default function GastosDeduciblesPage() {
         </div>
 
         {/* Resumen Ejecutivo */}
-        <Card className="mb-8 border-[#E0E0E0] shadow-sm">
+        <Card className="mb-8 border-[#E0E0E0] shadow-sm overflow-hidden px-6">
           <CardHeader className="bg-[#004C97] text-white">
             <CardTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />
@@ -70,7 +70,7 @@ export default function GastosDeduciblesPage() {
         </Card>
 
         {/* Tipos de Gastos Deducibles */}
-        <Card className="mb-8 border-[#E0E0E0] shadow-sm">
+        <Card className="mb-8 border-[#E0E0E0] shadow-sm overflow-hidden px-6">
           <CardHeader className="bg-[#2E7D32] text-white">
             <CardTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" />
@@ -210,7 +210,7 @@ export default function GastosDeduciblesPage() {
         </Card>
 
         {/* Requisitos Generales */}
-        <Card className="mb-8 border-[#E0E0E0] shadow-sm">
+        <Card className="mb-8 border-[#E0E0E0] shadow-sm overflow-hidden px-6">
           <CardHeader className="bg-[#FF9800] text-white">
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
@@ -294,7 +294,7 @@ export default function GastosDeduciblesPage() {
         </Card>
 
         {/* Plataforma de Gastos */}
-        <Card className="mb-8 border-[#E0E0E0] shadow-sm">
+        <Card className="mb-8 border-[#E0E0E0] shadow-sm overflow-hidden px-6">
           <CardHeader className="bg-[#1976D2] text-white">
             <CardTitle className="flex items-center gap-2">
               <ExternalLink className="h-5 w-5" />
@@ -370,7 +370,7 @@ export default function GastosDeduciblesPage() {
         </Card>
 
         {/* Ejemplo Práctico */}
-        <Card className="mb-8 border-[#E0E0E0] shadow-sm">
+        <Card className="mb-8 border-[#E0E0E0] shadow-sm overflow-hidden px-6">
           <CardHeader className="bg-[#4CAF50] text-white">
             <CardTitle className="flex items-center gap-2">
               <Calculator className="h-5 w-5" />
@@ -409,7 +409,7 @@ export default function GastosDeduciblesPage() {
         </Card>
 
         {/* Contacto y Enlaces */}
-        <Card className="border-[#E0E0E0] shadow-sm">
+        <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
           <CardHeader className="bg-[#666666] text-white">
             <CardTitle className="flex items-center gap-2">
               <Info className="h-5 w-5" />

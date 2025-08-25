@@ -27,12 +27,12 @@ describe('Asignación Familiar Tests', () => {
       const monthsWithAsignacion = result.monthlyCalculations.filter(calc => calc.asignacionFamiliar > 0);
       expect(monthsWithAsignacion).toHaveLength(12); // Todos los meses
 
-      // Verificar que el monto sea S/ 75.00 por mes
+      // Verificar que el monto sea S/ 75.00 por hijo por mes
       const firstMonth = result.monthlyCalculations[0];
-      expect(firstMonth.asignacionFamiliar).toBe(75.00);
+      expect(firstMonth.asignacionFamiliar).toBe(75.00 * 2); // 2 hijos = S/ 150
 
       // Verificar el total anual
-      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 12); // S/ 900.00 anual
+      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 2 * 12); // S/ 1,800 anual
     });
 
     it('should calculate asignación familiar for workers with children studying after 18', () => {
@@ -54,12 +54,12 @@ describe('Asignación Familiar Tests', () => {
       const monthsWithAsignacion = result.monthlyCalculations.filter(calc => calc.asignacionFamiliar > 0);
       expect(monthsWithAsignacion).toHaveLength(12); // Todos los meses
 
-      // Verificar que el monto sea S/ 75.00 por mes
+      // Verificar que el monto sea S/ 75.00 por mes (hijos estudiando)
       const firstMonth = result.monthlyCalculations[0];
-      expect(firstMonth.asignacionFamiliar).toBe(75.00);
+      expect(firstMonth.asignacionFamiliar).toBe(75.00); // 1 hijo estudiando = S/ 75
 
       // Verificar el total anual
-      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 12); // S/ 900.00 anual
+      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 12); // S/ 900 anual
     });
 
     it('should not calculate asignación familiar for workers without children', () => {
@@ -186,17 +186,17 @@ describe('Asignación Familiar Tests', () => {
       // Julio debería tener gratificaciones + asignación familiar (si inicia en enero)
       const july = result.monthlyCalculations.find(calc => calc.month === 7);
       expect(july?.gratificaciones).toBeGreaterThan(0);
-      expect(july?.asignacionFamiliar).toBe(75.00);
+      expect(july?.asignacionFamiliar).toBe(75.00 * 2); // 2 hijos = S/ 150
 
       // Diciembre debería tener gratificaciones + asignación familiar (si inicia en enero)
       const december = result.monthlyCalculations.find(calc => calc.month === 12);
       expect(december?.gratificaciones).toBeGreaterThan(0);
-      expect(december?.asignacionFamiliar).toBe(75.00);
+      expect(december?.asignacionFamiliar).toBe(75.00 * 2); // 2 hijos = S/ 150
 
       // Verificar que el ingreso total del mes incluya ambos
       if (july && december) {
-        expect(july.totalMonthlyIncome).toBe(4000 + july.gratificaciones + 75.00);
-        expect(december.totalMonthlyIncome).toBe(4000 + december.gratificaciones + 75.00);
+        expect(july.totalMonthlyIncome).toBe(4000 + july.gratificaciones + (75.00 * 2));
+        expect(december.totalMonthlyIncome).toBe(4000 + december.gratificaciones + (75.00 * 2));
       }
     });
 
@@ -243,12 +243,12 @@ describe('Asignación Familiar Tests', () => {
         childrenStudying: false
       });
 
-      // Verificar que esté incluido en el ingreso anual total
-      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 12); // S/ 900.00
+      // Verificar que esté incluido en el RBA
+      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 3 * 12); // S/ 2,700
       expect(result.summary.totalAnnualIncome).toBeGreaterThan(6000 * 12); // Más que solo el sueldo base
       
       // El ingreso anual incluye: sueldo + asignación familiar + gratificaciones + CTS
-      const expectedIncome = (6000 * 12) + 900.00;
+      const expectedIncome = (6000 * 12) + (75.00 * 3 * 12);
       expect(result.summary.totalAnnualIncome).toBeGreaterThan(expectedIncome);
     });
   });
@@ -269,12 +269,12 @@ describe('Asignación Familiar Tests', () => {
         childrenStudying: false
       });
 
-      // Verificar que el monto siga siendo S/ 75.00 por mes (no se multiplica por número de hijos)
+      // Verificar que el monto sea S/ 75.00 por hijo por mes
       const firstMonth = result.monthlyCalculations[0];
-      expect(firstMonth.asignacionFamiliar).toBe(75.00);
+      expect(firstMonth.asignacionFamiliar).toBe(75.00 * 5); // 5 hijos = S/ 375
 
       // Verificar el total anual
-      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 12);
+      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 5 * 12); // S/ 4,500 anual
     });
 
     it('should handle children studying after 18 correctly', () => {
@@ -294,10 +294,10 @@ describe('Asignación Familiar Tests', () => {
 
       // Verificar que reciba asignación familiar
       const firstMonth = result.monthlyCalculations[0];
-      expect(firstMonth.asignacionFamiliar).toBe(75.00);
+      expect(firstMonth.asignacionFamiliar).toBe(75.00); // 1 hijo estudiando = S/ 75
 
       // Verificar el total anual
-      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 12);
+      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 12); // S/ 900 anual
     });
 
     it('should handle both conditions (children under 18 and studying after 18)', () => {
@@ -317,10 +317,10 @@ describe('Asignación Familiar Tests', () => {
 
       // Verificar que reciba asignación familiar
       const firstMonth = result.monthlyCalculations[0];
-      expect(firstMonth.asignacionFamiliar).toBe(75.00);
+      expect(firstMonth.asignacionFamiliar).toBe(75.00 * 2); // 2 hijos = S/ 150
 
       // Verificar el total anual
-      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 12);
+      expect(result.summary.totalAsignacionFamiliar).toBe(75.00 * 2 * 12); // S/ 1,800 anual
     });
 
     it('should handle zero income correctly', () => {

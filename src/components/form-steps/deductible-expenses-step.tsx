@@ -5,39 +5,58 @@ import { FormField, FormItem, FormLabel, FormControl, FormDescription, FormMessa
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Receipt, Info, AlertTriangle } from 'lucide-react';
+import { RemunerationDisplay } from '../remuneration-display';
 
 // Import the form data type from the parent component
 type FormData = {
   year: number;
   monthlyIncome: number;
+  additionalIncomeByMonth: { month: number; amount: number }[];
   additionalIncome: number;
   additionalMonth: number;
   calculationMonth: number;
   previousRetentions: number;
   roundingDecimals: number;
+  // Deductible expenses
   restaurants: number;
   medicalServices: number;
   professionalServices: number;
   rentalProperties: number;
   essaludContributions: number;
+  // Nuevos campos para ingresos adicionales
   gratificaciones: number;
   bonificaciones: number;
   utilidades: number;
   cts: number;
   asignacionFamiliar: number;
+  // Campos para configuración de meses
   gratificacionesMonth?: number;
   bonificacionesMonth?: number;
   utilidadesMonth?: number;
   ctsMonth?: number;
   asignacionFamiliarMonth?: number;
+  // Campos para configuración de cálculos automáticos
   calculateGratificaciones: boolean;
   calculateCTS: boolean;
   calculateAsignacionFamiliar: boolean;
+  // Campos para gratificaciones
   insuranceType: 'essalud' | 'eps';
   startWorkMonth: number;
+  // Campos para asignación familiar
   hasChildren: boolean;
   childrenCount: number;
   childrenStudying: boolean;
+  // Campos para contratos de duración limitada
+  isLimitedContract: boolean;
+  contractEndMonth?: number;
+  // Campo para sector público
+  isPublicSectorWorker: boolean;
+  // Campo para bono por escolaridad del sector público
+  receivesSchoolingBonus: boolean;
+  // Campos para bono extraordinario judicial
+  isJudicialWorker: boolean;
+  judicialInstitution?: 'poder_judicial' | 'inpe' | 'ministerio_publico';
+  isDirectivePosition: boolean;
 };
 
 interface DeductibleExpensesStepProps {
@@ -58,38 +77,8 @@ export function DeductibleExpensesStep({ form }: DeductibleExpensesStepProps) {
 
   return (
     <div className="space-y-8">
-      {/* Information Card */}
-      <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
-        <CardHeader className="bg-[#E3F2FD] pb-4 -mt-6 -mx-6 px-6 pt-6">
-          <CardTitle className="text-lg text-[#004C97] flex items-center gap-2">
-            <Info className="h-5 w-5" />
-            Gastos Deducibles 2025 - Aplicación Condicional
-          </CardTitle>
-          <CardDescription className="text-[#1976D2]">
-            Deducción adicional de 3 UIT solo si los ingresos anuales superan 7 UIT (S/ 37,450)
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="bg-[#E3F2FD] p-4 rounded-lg border border-[#1976D2]">
-            <h4 className="font-semibold text-[#004C97] mb-2">💡 Aplicación Condicional según Ley 2025:</h4>
-            <ul className="space-y-1 text-sm text-[#1976D2]">
-              <li>• <strong>Condición principal:</strong> Solo aplica si tus ingresos anuales superan 7 UIT (S/ 37,450)</li>
-              <li>• <strong>Límite máximo:</strong> 3 UIT (S/ 16,050) para el año 2025</li>
-              <li>• <strong>Porcentajes por tipo:</strong> Restaurantes (15%), Médicos (30%), Profesionales (30%), Alquiler (30%), EsSalud (100%)</li>
-              <li>• <strong>Requisitos:</strong> Comprobantes válidos con tu DNI/RUC y negocio habido</li>
-              <li>• <strong>Medios de pago:</strong> Electrónicos obligatorios para montos ≥ S/ 2,000</li>
-            </ul>
-          </div>
-          
-          <div className="bg-[#FFEBEE] p-4 rounded-lg border border-[#B71C1C] mt-4">
-            <h4 className="font-semibold text-[#B71C1C] mb-2">⚠️ Importante:</h4>
-            <p className="text-sm text-[#B71C1C]">
-              Los gastos deducibles se aplicarán <strong>automáticamente</strong> solo si tus ingresos anuales proyectados superan S/ 37,450. 
-              Si no calificas, estos gastos no afectarán tu cálculo de impuestos.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Display Remuneration Calculation */}
+      <RemunerationDisplay watch={form.watch} currentStep={3} />
 
       {/* Deductible Expenses Form */}
       <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">

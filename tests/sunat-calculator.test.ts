@@ -430,4 +430,149 @@ describe('SunatCalculator - 5th Category Income Tax Calculation', () => {
       expect(result.summary.totalAnnualTax).toBe(0);
     });
   });
+
+  test('should calculate additional monthly retention for extraordinary income (PASO 5 SUNAT)', () => {
+    const calculator = new SunatCalculator();
+    
+    const result = calculator.calculate({
+      year: 2025,
+      monthlyIncome: 5000, // 60,000 anual (por encima de 7 UIT = 37,450)
+      additionalIncomeByMonth: [],
+      additionalIncome: 0,
+      additionalMonth: 12,
+      calculationMonth: 1,
+      previousRetentions: 0,
+      roundingDecimals: 2,
+      calculateGratificaciones: false,
+      calculateCTS: false,
+      calculateAsignacionFamiliar: false
+    });
+
+    // Verificar que hay impuesto anual (por encima de 7 UIT)
+    expect(result.summary.totalAnnualTax).toBeGreaterThan(0);
+    
+    // Verificar que todas las retenciones mensuales son mayores a 0
+    result.monthlyCalculations.forEach(month => {
+      expect(month.monthlyRetention).toBeGreaterThan(0);
+      expect(month.additionalMonthlyRetention).toBe(0); // Sin ingresos extraordinarios
+    });
+    
+    // Ahora probar con ingresos extraordinarios en un mes específico
+    const resultWithExtraordinary = calculator.calculate({
+      year: 2025,
+      monthlyIncome: 5000, // 60,000 anual
+      additionalIncomeByMonth: [],
+      additionalIncome: 0,
+      additionalMonth: 12,
+      calculationMonth: 1,
+      previousRetentions: 0,
+      roundingDecimals: 2,
+      calculateGratificaciones: false,
+      calculateCTS: false,
+      calculateAsignacionFamiliar: false,
+      // Agregar ingresos extraordinarios en enero (mes 1)
+      bonificaciones: 2000, // Bonificación extraordinaria
+      bonificacionesMonth: 1, // Aplicar en enero
+      utilidades: 1000,      // Utilidades
+      utilidadesMonth: 1     // Aplicar en enero
+    });
+
+    // Verificar que hay retenciones adicionales por ingresos extraordinarios
+    const monthWithExtraordinary = resultWithExtraordinary.monthlyCalculations.find(m => m.month === 1);
+    expect(monthWithExtraordinary?.additionalMonthlyRetention).toBeGreaterThan(0);
+    
+    // Verificar que la retención total incluye la básica + la adicional
+    expect(monthWithExtraordinary?.monthlyRetention).toBeGreaterThan(
+      result.monthlyCalculations.find(m => m.month === 1)?.monthlyRetention || 0
+    );
+  });
+
+  test('should calculate zero monthly retentions when income is below 7 UIT', () => {
+    const calculator = new SunatCalculator();
+    
+    const result = calculator.calculate({
+      year: 2025,
+      monthlyIncome: 2000, // 24,000 anual (por debajo de 7 UIT = 37,450)
+      additionalIncomeByMonth: [],
+      additionalIncome: 0,
+      additionalMonth: 12,
+      calculationMonth: 1,
+      previousRetentions: 0,
+      roundingDecimals: 2,
+      calculateGratificaciones: false,
+      calculateCTS: false,
+      calculateAsignacionFamiliar: false
+    });
+
+    // Verificar que no hay impuesto anual
+    expect(result.summary.totalAnnualTax).toBe(0);
+    
+    // Verificar que todas las retenciones mensuales son 0
+    result.monthlyCalculations.forEach(month => {
+      expect(month.monthlyRetention).toBe(0);
+    });
+    
+    // Verificar que el total de retenciones anuales es 0
+    expect(result.summary.totalAnnualRetention).toBe(0);
+  });
+
+  test('should calculate correct retentions for 5000 base salary with EPS gratifications, 2 children, and CTS', () => {
+    const calculator = new SunatCalculator();
+    
+    const result = calculator.calculate({
+      year: 2025,
+      monthlyIncome: 5000, // S/ 5,000 mensual
+      additionalIncomeByMonth: [],
+      additionalIncome: 0,
+      additionalMonth: 12,
+      calculationMonth: 1,
+      previousRetentions: 0,
+      roundingDecimals: 2,
+      calculateGratificaciones: true, // Gratificaciones automáticas
+      calculateCTS: true, // CTS automático
+      calculateAsignacionFamiliar: true, // Asignación familiar automática
+      insuranceType: 'eps', // Tipo EPS
+      startWorkMonth: 1, // Inicio en enero
+      hasChildren: true, // Tiene hijos
+      childrenCount: 2, // 2 hijos
+      childrenStudying: false
+    });
+
+    // Verificar ingresos anuales proyectados (según logs reales)
+    expect(result.summary.totalAnnualIncome).toBeCloseTo(86202.08, 0);
+    
+    // Verificar que hay impuesto anual (por encima de 7 UIT = 37,450)
+    expect(result.summary.totalAnnualTax).toBeCloseTo(4578.29, 0);
+    
+    // Verificar retenciones mensuales específicas
+    const enero = result.monthlyCalculations.find(m => m.month === 1);
+    const septiembre = result.monthlyCalculations.find(m => m.month === 9);
+    const diciembre = result.monthlyCalculations.find(m => m.month === 12);
+    
+    // Enero-Agosto: retención alta (primeros meses)
+    expect(enero?.monthlyRetention).toBeCloseTo(381.52, 0);
+    
+    // Septiembre-Noviembre: retención baja (meses intermedios)
+    expect(septiembre?.monthlyRetention).toBeCloseTo(76.30, 0);
+    
+    // Diciembre: retención alta (regularización final)
+    expect(diciembre?.monthlyRetention).toBeCloseTo(1297.23, 0);
+    
+    // Verificar que las gratificaciones y CTS se muestran en la tabla
+    const julio = result.monthlyCalculations.find(m => m.month === 7);
+    const mayo = result.monthlyCalculations.find(m => m.month === 5);
+    
+    expect(julio?.gratificaciones).toBeCloseTo(6227.08, 0);
+    expect(mayo?.cts).toBeCloseTo(2500, 0);
+    
+    // Verificar asignación familiar mensual
+    result.monthlyCalculations.forEach(month => {
+      expect(month.asignacionFamiliar).toBe(150); // 75 * 2 hijos
+    });
+    
+    // Verificar totales en el resumen
+    expect(result.summary.totalGratificaciones).toBeCloseTo(16902.08, 0);
+    expect(result.summary.totalCTS).toBeCloseTo(7500, 0);
+    expect(result.summary.totalAsignacionFamiliar).toBe(1800); // 150 * 12 meses
+  });
 });
