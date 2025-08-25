@@ -424,10 +424,8 @@ export function SunatCalculatorForm({ onStepChange }: SunatCalculatorFormProps) 
         console.log('\n🏛️ INFORMACIÓN DEL SECTOR PÚBLICO:');
         console.log('  • Es Sector Público:', calculationResult.summary.isPublicSectorWorker);
         console.log('  • Total Aguinaldo:', calculationResult.summary.totalAguinaldo);
-        if (calculationResult.summary.receivesSchoolingBonus) {
-          console.log('  • Recibe Bono por Escolaridad:', calculationResult.summary.receivesSchoolingBonus);
-          console.log('  • Total Bono por Escolaridad:', calculationResult.summary.totalBonoEscolaridad);
-        }
+        console.log('  • Total Bono por Escolaridad:', calculationResult.summary.totalBonoEscolaridad);
+        console.log('  • Total Bono Judicial:', calculationResult.summary.totalBonoJudicial);
       }
       
       console.log('='.repeat(80));

@@ -136,6 +136,7 @@ export interface SunatCalculationResult {
     // Campo para bono por escolaridad del sector público
     receivesSchoolingBonus?: boolean;
     totalBonoEscolaridad?: number;
+    totalBonoJudicial?: number;
     // PASO 2: Información sobre donaciones y deducción de 7 UIT
     deduction7UIT: number;         // Monto de la deducción de 7 UIT
     donations: number;              // Monto total de donaciones
@@ -487,6 +488,7 @@ export class SunatCalculator {
     // Calcular aguinaldo para sector público
     let totalAguinaldo = 0;
     let totalBonoEscolaridad = 0;
+    let totalBonoJudicial = 0;
     const isPublicSectorWorker = params.isPublicSectorWorker || false;
     const receivesSchoolingBonus = params.receivesSchoolingBonus || false;
     
@@ -496,6 +498,15 @@ export class SunatCalculator {
     
     if (isPublicSectorWorker && receivesSchoolingBonus) {
       totalBonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
+    }
+    
+    // Calcular bono extraordinario judicial (solo en enero)
+    if (params.isJudicialWorker && 
+        params.judicialInstitution && 
+        !params.isDirectivePosition && 
+        params.monthlyIncome < 2000 && 
+        1 >= params.calculationMonth) { // Solo si está trabajando en enero
+      totalBonoJudicial = 1000.00; // S/ 1,000 según normativa
     }
     
     // PASO 1.1: Calcular remuneración ordinaria proyectada
@@ -526,7 +537,8 @@ export class SunatCalculator {
     const projectedExtraordinaryIncome = (params.bonificaciones || 0) + 
       (params.utilidades || 0) + 
       totalAguinaldo + 
-      totalBonoEscolaridad;
+      totalBonoEscolaridad + 
+      totalBonoJudicial;
     
     // PASO 1.7: Calcular RBA total proyectada
     // RBA = Remuneración ordinaria proyectada + Gratificaciones + CTS + Asignación familiar + 
@@ -741,8 +753,19 @@ export class SunatCalculator {
         bonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
       }
       
+      // Calcular bono extraordinario judicial (solo en enero)
+      let bonoJudicial = 0;
+      // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
+      if (params.isJudicialWorker && 
+          params.judicialInstitution && 
+          !params.isDirectivePosition && 
+          params.monthlyIncome < 2000 && 
+          1 >= params.calculationMonth) { // Solo si está trabajando en enero
+        bonoJudicial = 1000.00; // S/ 1,000 según normativa
+      }
+      
       // Total monthly income
-      const totalMonthlyIncome = monthlyIncome + additionalIncome + gratificaciones + bonificaciones + utilidades + cts + asignacionFamiliarMensual + aguinaldo + bonoEscolaridad;
+      const totalMonthlyIncome = monthlyIncome + additionalIncome + gratificaciones + bonificaciones + utilidades + cts + asignacionFamiliarMensual + aguinaldo + bonoEscolaridad + bonoJudicial;
       
       // Calcular retención mensual según metodología SUNAT
       const monthlyRetention = this.calculateMonthlyRetention(
@@ -756,7 +779,7 @@ export class SunatCalculator {
       // Calcular retención adicional por ingresos extraordinarios (PASO 5 SUNAT)
       // Considerar TODOS los tipos de ingresos extraordinarios para el cálculo
       // Según SUNAT: participaciones, reintegros, gratificaciones extraordinarias, bonificaciones, utilidades, CTS, etc.
-      const extraordinaryIncome = additionalIncome + bonificaciones + utilidades + gratificaciones + cts + aguinaldo + bonoEscolaridad;
+      const extraordinaryIncome = additionalIncome + bonificaciones + utilidades + gratificaciones + cts + aguinaldo + bonoEscolaridad + bonoJudicial;
       
       // PASO 5: Calcular retención adicional por ingresos extraordinarios
       // ===================================================================
@@ -794,6 +817,7 @@ export class SunatCalculator {
       if (asignacionFamiliarMensual > 0) observations.push('Asignación Familiar');
       if (aguinaldo > 0) observations.push('Aguinaldo Sector Público');
       if (bonoEscolaridad > 0) observations.push('Bono por Escolaridad Sector Público');
+      if (bonoJudicial > 0) observations.push('Bono Extraordinario Judicial');
 
       // Verificar si es el mes de terminación del contrato
       const isContractEndMonth = Boolean(isLimitedContract && contractEndMonth && month === contractEndMonth);
@@ -822,6 +846,7 @@ export class SunatCalculator {
         finalRetention: undefined, // Se calculará después si es necesario
         aguinaldo,
         bonoEscolaridad,
+        bonoJudicial,
         ...gratificacionDetail,
         ...ctsDetail
       };
@@ -952,6 +977,7 @@ export class SunatCalculator {
         // Campo para bono por escolaridad del sector público
         receivesSchoolingBonus: params.receivesSchoolingBonus,
         totalBonoEscolaridad,
+        totalBonoJudicial,
         // PASO 2: Información sobre donaciones y deducción de 7 UIT
         deduction7UIT: this.DEDUCTION_7_UIT,
         donations: params.donations || 0,

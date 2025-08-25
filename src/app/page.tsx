@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Calculator, FileText, TrendingUp, Shield, Zap, Receipt } from 'lucide-react';
+import { Calculator, FileText, TrendingUp, Shield, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -10,12 +10,6 @@ const features = [
     title: 'Calculadora SUNAT',
     description: 'Calcula tus retenciones de impuestos de forma precisa según la normativa peruana vigente.',
     href: '/sunat-calculator'
-  },
-  {
-    icon: Receipt,
-    title: 'Gastos Deducibles 2025',
-    description: 'Información completa sobre gastos deducibles y deducción adicional de 3 UIT para el ejercicio 2025.',
-    href: '/gastos-deducibles'
   },
   {
     icon: TrendingUp,
@@ -39,9 +33,9 @@ const features = [
 
 const stats = [
   { label: 'UIT 2025', value: 'S/ 5,350', description: 'Unidad Impositiva Tributaria (MEF DS Nº 260-2024-EF)' },
-  { label: 'Deducción 7 UIT', value: 'S/ 37,450', description: 'Deducción anual estándar' },
-  { label: 'Deducción Adicional 3 UIT', value: 'S/ 16,050', description: 'Máximo para gastos deducibles 2025' },
-  { label: 'Tramo Máximo', value: '30%', description: 'Tasa impositiva máxima' }
+  { label: 'Deducción 7 UIT', value: 'S/ 37,450', description: 'Deducción anual estándar (Artículo 46°)' },
+  { label: 'Gastos Deducibles', value: 'S/ 16,050', description: 'Máximo 3 UIT adicionales (restaurantes, médicos, etc.)' },
+  { label: 'Metodología', value: '5 Pasos', description: 'Algoritmo oficial SUNAT implementado' }
 ];
 
 export default function Home() {
@@ -55,8 +49,9 @@ export default function Home() {
               Calculadora SUNAT
             </h1>
             <p className="text-xl text-[#666666] mb-8 max-w-3xl mx-auto">
-              Calcula tus retenciones de impuestos de forma precisa y confiable según la normativa peruana. 
-              Optimiza tu planificación fiscal con nuestra herramienta especializada.
+              Calcula tus retenciones de impuestos de forma precisa y confiable según la metodología oficial SUNAT. 
+              Incluye gastos deducibles, créditos fiscales y cálculo progresivo mensual. Optimiza tu planificación fiscal 
+              con nuestra herramienta especializada que implementa los 5 pasos de la normativa peruana.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/sunat-calculator">
@@ -180,7 +175,6 @@ export default function Home() {
               <h3 className="text-lg font-semibold mb-4">Enlaces Útiles</h3>
               <ul className="space-y-2 text-[#E0E0E0]">
                 <li><Link href="/sunat-calculator" className="hover:text-white transition-colors duration-200">Calculadora</Link></li>
-                <li><Link href="/gastos-deducibles" className="hover:text-white transition-colors duration-200">Gastos Deducibles</Link></li>
                 <li><Link href="/documentation" className="hover:text-white transition-colors duration-200">Documentación</Link></li>
                 <li><Link href="/settings" className="hover:text-white transition-colors duration-200">Configuración</Link></li>
               </ul>

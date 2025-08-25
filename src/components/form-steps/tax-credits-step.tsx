@@ -73,11 +73,11 @@ export function TaxCreditsStep({ form }: TaxCreditsStepProps) {
   return (
     <div className="space-y-6">
       {/* Paso 2: Donaciones */}
-      <Card className="border-[#E0E0E0] shadow-sm">
-        <CardHeader className="bg-[#4CAF50] text-white">
+      <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-4">
+        <CardHeader className="bg-[#4CAF50] text-white -mt-8 -mb-8 -mx-4 pt-6 pb-4">
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5" />
-            Paso 2: Donaciones (Artículo 49° de la Ley)
+            Donaciones (Artículo 49° de la Ley)
           </CardTitle>
           <CardDescription className="text-[#E8F5E8]">
             Configura las donaciones que se pueden deducir en diciembre con motivo del ajuste final del impuesto
@@ -130,11 +130,11 @@ export function TaxCreditsStep({ form }: TaxCreditsStepProps) {
       <div className="h-px bg-gray-200 my-6" />
 
       {/* Paso 3: Créditos */}
-      <Card className="border-[#E0E0E0] shadow-sm">
-        <CardHeader className="bg-[#FF9800] text-white">
+      <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-4">
+        <CardHeader className="bg-[#FF9800] text-white -mt-8 -mb-8 -mx-4 pt-6 pb-4">
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5" />
-            Paso 3: Créditos (Artículo 88° de la Ley)
+            Créditos (Artículo 88° de la Ley)
           </CardTitle>
           <CardDescription className="text-[#FFF3E0]">
             Configura los créditos que se pueden deducir del impuesto anual proyectado
@@ -180,100 +180,105 @@ export function TaxCreditsStep({ form }: TaxCreditsStepProps) {
             )}
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="previousTaxCredits"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">
-                    Créditos de Declaraciones Anteriores (S/)
-                  </FormLabel>
-                  <FormDescription>
-                    Créditos contra el tributo de declaraciones anteriores
-                  </FormDescription>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          {/* Solo mostrar los campos de créditos si se ha marcado la casilla */}
+          {form.watch('isOnlyFifthCategoryIncome') && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="previousTaxCredits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        Créditos de Declaraciones Anteriores (S/)
+                      </FormLabel>
+                      <FormDescription>
+                        Créditos contra el tributo de declaraciones anteriores
+                      </FormDescription>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="previousTaxPayments"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">
-                    Pagos a Cuenta del Impuesto (S/)
-                  </FormLabel>
-                  <FormDescription>
-                    Pagos efectuados a cuenta del impuesto liquidado
-                  </FormDescription>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                <FormField
+                  control={form.control}
+                  name="previousTaxPayments"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        Pagos a Cuenta del Impuesto (S/)
+                      </FormLabel>
+                      <FormDescription>
+                        Pagos efectuados a cuenta del impuesto liquidado
+                      </FormDescription>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <FormField
-              control={form.control}
-              name="previousTaxRefunds"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium">
-                    Saldos a Favor Reconocidos (S/)
-                  </FormLabel>
-                  <FormDescription>
-                    Saldos a favor reconocidos por SUNAT o establecidos en declaraciones anteriores
-                  </FormDescription>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                      {...field}
-                      onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="flex items-start space-x-2">
-              <FileText className="h-4 w-4 text-gray-500 mt-0.5" />
-              <div className="text-sm text-gray-600">
-                <p className="font-medium text-gray-800">Documentación Requerida:</p>
-                <ul className="mt-2 space-y-1 text-gray-600">
-                  <li>• Los créditos deben estar documentados y justificados</li>
-                  <li>• Los saldos a favor deben estar reconocidos por SUNAT</li>
-                  <li>• Las declaraciones anteriores no deben estar impugnadas</li>
-                  <li>• Solo aplica para rentas de quinta categoría según el Artículo 79°</li>
-                </ul>
+                <FormField
+                  control={form.control}
+                  name="previousTaxRefunds"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium">
+                        Saldos a Favor Reconocidos (S/)
+                      </FormLabel>
+                      <FormDescription>
+                        Saldos a favor reconocidos por SUNAT o establecidos en declaraciones anteriores
+                      </FormDescription>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          step="0.01"
+                          min="0"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-            </div>
-          </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex items-start space-x-2">
+                  <FileText className="h-4 w-4 text-gray-500 mt-0.5" />
+                  <div className="text-sm text-gray-600">
+                    <p className="font-medium text-gray-800">Documentación Requerida:</p>
+                    <ul className="mt-2 space-y-1 text-gray-600">
+                      <li>• Los créditos deben estar documentados y justificados</li>
+                      <li>• Los saldos a favor deben estar reconocidos por SUNAT</li>
+                      <li>• Las declaraciones anteriores no deben estar impugnadas</li>
+                      <li>• Solo aplica para rentas de quinta categoría según el Artículo 79°</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

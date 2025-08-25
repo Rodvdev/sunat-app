@@ -3,13 +3,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Calculator, Home, FileText, Settings, Receipt } from 'lucide-react';
+import { Calculator, Home, FileText, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigation = [
   { name: 'Inicio', href: '/', icon: Home },
   { name: 'Calculadora SUNAT', href: '/sunat-calculator', icon: Calculator },
-  { name: 'Gastos Deducibles', href: '/gastos-deducibles', icon: Receipt },
   { name: 'Documentación', href: '/documentation', icon: FileText },
   { name: 'Configuración', href: '/settings', icon: Settings },
 ];
