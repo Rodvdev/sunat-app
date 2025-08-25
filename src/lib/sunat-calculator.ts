@@ -370,51 +370,66 @@ export class SunatCalculator {
     }
     
     // Calcular ingresos totales anuales proyectados para determinar si aplican gastos deducibles
-    // Según SUNAT: la remuneración mensual se multiplica por el número de meses que falta para terminar el ejercicio gravable
-    let remainingMonths = 12 - startWorkMonth + 1; // Meses desde el inicio hasta diciembre
-    
-    // Si es un contrato de duración limitada, ajustar los meses
-    const isLimitedContract = params.isLimitedContract || false;
-    const contractEndMonth = params.contractEndMonth;
-    let totalContractMonths = remainingMonths;
-    
-    if (isLimitedContract && contractEndMonth && contractEndMonth >= startWorkMonth && contractEndMonth <= 12) {
-      remainingMonths = contractEndMonth - startWorkMonth + 1;
-      totalContractMonths = remainingMonths;
-    }
-    
-    // Calcular aguinaldo para sector público
-    const isPublicSectorWorker = params.isPublicSectorWorker || false;
-    let totalAguinaldo = 0;
-    if (isPublicSectorWorker && 7 >= startWorkMonth) { // Solo si está trabajando en julio
-      totalAguinaldo = this.AGUINALDO_PUBLICO;
-    }
-    
-    // Calcular bono por escolaridad para sector público
-    const receivesSchoolingBonus = params.receivesSchoolingBonus || false;
-    let totalBonoEscolaridad = 0;
-    if (isPublicSectorWorker && receivesSchoolingBonus) {
-      totalBonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
-    }
-    
-    const totalProjectedAnnualIncome = (params.monthlyIncome * remainingMonths) + 
-      this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth) +
-      (calculateGratificaciones ? this.calculateTotalGratificaciones(params.monthlyIncome, insuranceType, startWorkMonth) : 0) +
-      (calculateCTS ? this.calculateTotalCTS(params.monthlyIncome, startWorkMonth) : 0) +
-      (calculateAsignacionFamiliar ? (asignacionFamiliar * remainingMonths) : 0) +
-      totalAguinaldo +
-      totalBonoEscolaridad;
-
-    // Los gastos deducibles solo aplican si los ingresos anuales superan 7 UIT (S/ 37,450)
-    const qualifiesForDeductibleExpenses = totalProjectedAnnualIncome > this.DEDUCTION_7_UIT;
-    
-    // Calcular gastos deducibles solo si califica
-    const deductibleExpensesSummary = qualifiesForDeductibleExpenses 
-      ? this.calculateDeductibleExpenses(params.deductibleExpenses)
-      : this.getEmptyDeductibleExpensesSummary();
+      // Calcular ingresos totales anuales proyectados para determinar si aplican gastos deducibles
+      // Según SUNAT: la remuneración mensual se multiplica por el número de meses que falta para terminar el ejercicio gravable
+      let remainingMonths = 12 - startWorkMonth + 1; // Meses desde el inicio hasta diciembre
       
+      // Si es un contrato de duración limitada, ajustar los meses
+      const isLimitedContract = params.isLimitedContract || false;
+      const contractEndMonth = params.contractEndMonth;
+      let totalContractMonths = remainingMonths;
+      
+      if (isLimitedContract && contractEndMonth && contractEndMonth >= startWorkMonth && contractEndMonth <= 12) {
+        remainingMonths = contractEndMonth - startWorkMonth + 1;
+        totalContractMonths = remainingMonths;
+      }
+      
+      // Calcular aguinaldo para sector público
+      let totalAguinaldo = 0;
+      let totalBonoEscolaridad = 0;
+      const isPublicSectorWorker = params.isPublicSectorWorker || false;
+      const receivesSchoolingBonus = params.receivesSchoolingBonus || false;
+      
+      if (isPublicSectorWorker && 7 >= startWorkMonth) { // Solo si está trabajando en julio
+        totalAguinaldo = this.AGUINALDO_PUBLICO;
+      }
+      
+      if (isPublicSectorWorker && receivesSchoolingBonus) {
+        totalBonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
+      }
+      
+      // RBA para los meses que faltan para acabar el año - para cálculo del IAP y determinar si califica para gastos deducibles
+      // IMPORTANTE: Según SUNAT, aun cuando el contrato sea por plazo inferior a un año, 
+      // la proyección equivale a multiplicar la remuneración mensual por el número de meses que falte para acabar el año
+      const rbaFullYear = (params.monthlyIncome * remainingMonths) + 
+        this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth) +
+        (calculateGratificaciones ? this.calculateTotalGratificaciones(params.monthlyIncome, insuranceType, startWorkMonth) : 0) +
+        (calculateCTS ? this.calculateTotalCTS(params.monthlyIncome, startWorkMonth) : 0) +
+        (calculateAsignacionFamiliar ? (asignacionFamiliar * remainingMonths) : 0) +
+        totalAguinaldo +
+        totalBonoEscolaridad;
+      
+      // RBA para los meses que realmente trabaja - para cálculos mensuales
+      const totalProjectedAnnualIncome = (params.monthlyIncome * remainingMonths) + 
+        this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth) +
+        (calculateGratificaciones ? this.calculateTotalGratificaciones(params.monthlyIncome, insuranceType, startWorkMonth) : 0) +
+        (calculateCTS ? this.calculateTotalCTS(params.monthlyIncome, startWorkMonth) : 0) +
+        (calculateAsignacionFamiliar ? (asignacionFamiliar * remainingMonths) : 0) +
+        totalAguinaldo +
+        totalBonoEscolaridad;
+      
+      // Los gastos deducibles solo aplican si los ingresos anuales superan 7 UIT (S/ 37,450)
+      // IMPORTANTE: Usar rbaFullYear para determinar si califica, no totalProjectedAnnualIncome
+      const qualifiesForDeductibleExpenses = rbaFullYear > this.DEDUCTION_7_UIT;
+      
+      // Calcular gastos deducibles solo si califica
+      const deductibleExpensesSummary = qualifiesForDeductibleExpenses 
+        ? this.calculateDeductibleExpenses(params.deductibleExpenses)
+        : this.getEmptyDeductibleExpensesSummary();
+        
       // Calcular impuesto anual proyectado
-      const projectedNetIncome = Math.max(0, totalProjectedAnnualIncome - this.DEDUCTION_7_UIT - deductibleExpensesSummary.totalDeduction);
+      // IMPORTANTE: Usar rbaFullYear para calcular el IAP, no totalProjectedAnnualIncome
+      const projectedNetIncome = Math.max(0, rbaFullYear - this.DEDUCTION_7_UIT - deductibleExpensesSummary.totalDeduction);
       
       // Calcular la tasa de impuesto aplicable según el tramo de la RNA
       const applicableTaxRate = this.calculateEffectiveTaxRateByTramo(projectedNetIncome);
@@ -530,7 +545,8 @@ export class SunatCalculator {
         month,
         projectedAnnualTax,
         accumulatedRetentions,
-        params.calculationMonth
+        params.calculationMonth,
+        monthlyCalculations
       );
       
       // Calcular retención adicional por ingresos extraordinarios (PASO 5 SUNAT)
@@ -735,7 +751,8 @@ export class SunatCalculator {
     month: number,
     projectedAnnualTax: number,
     accumulatedRetentions: number,
-    calculationMonth: number
+    calculationMonth: number,
+    monthlyCalculations: MonthlyCalculation[]
   ): number {
     let monthlyRetention = 0;
     
@@ -759,37 +776,34 @@ export class SunatCalculator {
       // Enero, Febrero y Marzo: Impuesto Anual Proyectado(IAP) ÷ 12
       monthlyRetention = projectedAnnualTax / 12;
     } else if (month === 4) {
-      // Abril: (IAP - Retenciones enero-marzo) ÷ 9
-      const retentionsJanToMar = (projectedAnnualTax / 12) * 3;
+      // Abril: (IAP - Retenciones efectuadas de enero a marzo) ÷ 9
+      // Calcular retenciones acumuladas hasta marzo
+      const retentionsJanToMar = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 3);
       const remainingTax = projectedAnnualTax - retentionsJanToMar;
       monthlyRetention = remainingTax / 9;
     } else if (month === 5 || month === 6 || month === 7) {
-      // Mayo, Junio y Julio: (IAP - Retenciones de enero a abril) ÷ 8
-      const retentionsJanToMar = (projectedAnnualTax / 12) * 3;
-      const retentionsApr = (projectedAnnualTax - retentionsJanToMar) / 9;
-      const retentionsJanToApr = retentionsJanToMar + retentionsApr;
+      // Mayo, Junio y Julio: (IAP - Retenciones efectuadas de enero a abril) ÷ 8
+      // Calcular retenciones acumuladas hasta abril
+      const retentionsJanToApr = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 4);
       const remainingTax = projectedAnnualTax - retentionsJanToApr;
       monthlyRetention = remainingTax / 8;
     } else if (month === 8) {
-      // Agosto: (IAP - Retenciones de enero a julio) ÷ 5
-      const retentionsJanToMar = (projectedAnnualTax / 12) * 3;
-      const retentionsApr = (projectedAnnualTax - retentionsJanToMar) / 9;
-      const retentionsMayToJul = ((projectedAnnualTax - retentionsJanToMar - retentionsApr) / 8) * 3;
-      const retentionsJanToJul = retentionsJanToMar + retentionsApr + retentionsMayToJul;
+      // Agosto: (IAP - Retenciones efectuadas de enero a julio) ÷ 5
+      // Calcular retenciones acumuladas hasta julio
+      const retentionsJanToJul = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 7);
       const remainingTax = projectedAnnualTax - retentionsJanToJul;
       monthlyRetention = remainingTax / 5;
     } else if (month === 9 || month === 10 || month === 11) {
-      // Setiembre, Octubre y Noviembre: (IAP - Retenciones de enero a agosto) ÷ 4
-      const retentionsJanToMar = (projectedAnnualTax / 12) * 3;
-      const retentionsApr = (projectedAnnualTax - retentionsJanToMar) / 9;
-      const retentionsMayToJul = ((projectedAnnualTax - retentionsJanToMar - retentionsApr) / 8) * 3;
-      const retentionsAug = ((projectedAnnualTax - retentionsJanToMar - retentionsApr - retentionsMayToJul) / 5);
-      const retentionsJanToAug = retentionsJanToMar + retentionsApr + retentionsMayToJul + retentionsAug;
+      // Setiembre, Octubre y Noviembre: (IAP - Retenciones efectuadas de enero a agosto) ÷ 4
+      // Calcular retenciones acumuladas hasta agosto
+      const retentionsJanToAug = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 8);
       const remainingTax = projectedAnnualTax - retentionsJanToAug;
       monthlyRetention = remainingTax / 4;
     } else if (month === 12) {
-      // Diciembre: (IAP - Retenciones de enero a noviembre)
-      monthlyRetention = projectedAnnualTax - accumulatedRetentions;
+      // Diciembre: (IAP - Retenciones efectuadas de enero a noviembre)
+      // Calcular retenciones acumuladas hasta noviembre
+      const retentionsJanToNov = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 11);
+      monthlyRetention = projectedAnnualTax - retentionsJanToNov;
     }
     
     // Asegurar que la retención no sea negativa
@@ -1013,5 +1027,20 @@ export class SunatCalculator {
       errors,
       warnings
     };
+  }
+
+  private calculateAccumulatedRetentionsUpToMonth(monthlyCalculations: MonthlyCalculation[], monthIndex: number): number {
+    let accumulatedRetentions = 0;
+    
+    // Filtrar solo los cálculos hasta el mes especificado (1-based index)
+    for (let i = 0; i < monthlyCalculations.length; i++) {
+      const calc = monthlyCalculations[i];
+      if (calc && calc.month <= monthIndex) {
+        // Sumar solo la retención ordinaria (PASO 4), no la adicional
+        accumulatedRetentions += calc.monthlyRetention - (calc.additionalMonthlyRetention || 0);
+      }
+    }
+    
+    return accumulatedRetentions;
   }
 }
