@@ -474,32 +474,32 @@ export class SunatCalculator {
     // CORRECCIÓN: remainingMonths debe ser desde el mes de cálculo hasta diciembre
     // (no desde el mes de inicio de trabajo)
     let remainingMonths = 12 - params.calculationMonth + 1; // Meses desde el mes de cálculo hasta diciembre
-    
-    // Si es un contrato de duración limitada, ajustar los meses
-    const isLimitedContract = params.isLimitedContract || false;
-    const contractEndMonth = params.contractEndMonth;
-    let totalContractMonths = remainingMonths;
-    
+      
+      // Si es un contrato de duración limitada, ajustar los meses
+      const isLimitedContract = params.isLimitedContract || false;
+      const contractEndMonth = params.contractEndMonth;
+      let totalContractMonths = remainingMonths;
+      
     if (isLimitedContract && contractEndMonth && contractEndMonth >= params.calculationMonth && contractEndMonth <= 12) {
       remainingMonths = contractEndMonth - params.calculationMonth + 1;
-      totalContractMonths = remainingMonths;
-    }
-    
-    // Calcular aguinaldo para sector público
-    let totalAguinaldo = 0;
-    let totalBonoEscolaridad = 0;
+        totalContractMonths = remainingMonths;
+      }
+      
+      // Calcular aguinaldo para sector público
+      let totalAguinaldo = 0;
+      let totalBonoEscolaridad = 0;
     let totalBonoJudicial = 0;
-    const isPublicSectorWorker = params.isPublicSectorWorker || false;
-    const receivesSchoolingBonus = params.receivesSchoolingBonus || false;
-    
+      const isPublicSectorWorker = params.isPublicSectorWorker || false;
+      const receivesSchoolingBonus = params.receivesSchoolingBonus || false;
+      
     if (isPublicSectorWorker && 7 >= params.calculationMonth) { // Solo si está trabajando en julio
-      totalAguinaldo = this.AGUINALDO_PUBLICO;
-    }
-    
-    if (isPublicSectorWorker && receivesSchoolingBonus) {
-      totalBonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
-    }
-    
+        totalAguinaldo = this.AGUINALDO_PUBLICO;
+      }
+      
+      if (isPublicSectorWorker && receivesSchoolingBonus) {
+        totalBonoEscolaridad = this.BONO_ESCOLARIDAD_PUBLICO;
+      }
+      
     // Calcular bono extraordinario judicial (solo en enero)
     if (params.isJudicialWorker && 
         params.judicialInstitution && 
@@ -536,7 +536,7 @@ export class SunatCalculator {
     // Estos conceptos se consideran una sola vez al año, no se multiplican por meses
     const projectedExtraordinaryIncome = (params.bonificaciones || 0) + 
       (params.utilidades || 0) + 
-      totalAguinaldo + 
+        totalAguinaldo +
       totalBonoEscolaridad + 
       totalBonoJudicial;
     
@@ -549,8 +549,8 @@ export class SunatCalculator {
       projectedAsignacionFamiliar + 
       projectedAdditionalIncome + 
       projectedExtraordinaryIncome;
-    
-    // RBA para los meses que realmente trabaja - para cálculos mensuales
+      
+      // RBA para los meses que realmente trabaja - para cálculos mensuales
     // (mantener compatibilidad con código existente)
     const totalProjectedAnnualIncome = rbaFullYear;
     
@@ -570,17 +570,17 @@ export class SunatCalculator {
     const incomeAfter7UITDeduction = Math.max(0, rbaFullYear - deduction7UIT);
     
     // PASO 2.3: Determinar si califica para gastos deducibles
-    // Los gastos deducibles solo aplican si los ingresos anuales superan 7 UIT (S/ 37,450)
+      // Los gastos deducibles solo aplican si los ingresos anuales superan 7 UIT (S/ 37,450)
     // Esto es importante porque determina si se pueden considerar gastos adicionales
     const qualifiesForDeductibleExpenses = rbaFullYear > deduction7UIT;
-    
+      
     // PASO 2.4: Calcular gastos deducibles solo si califica
     // Los gastos deducibles incluyen restaurantes, servicios médicos, profesionales, etc.
     // con un límite máximo de 3 UIT adicionales
-    const deductibleExpensesSummary = qualifiesForDeductibleExpenses 
-      ? this.calculateDeductibleExpenses(params.deductibleExpenses)
-      : this.getEmptyDeductibleExpensesSummary();
-    
+      const deductibleExpensesSummary = qualifiesForDeductibleExpenses 
+        ? this.calculateDeductibleExpenses(params.deductibleExpenses)
+        : this.getEmptyDeductibleExpensesSummary();
+        
     // PASO 2.5: Calcular ingreso neto después de gastos deducibles
     // Este es el ingreso final sobre el cual se calcula el impuesto
     const incomeAfterDeductibleExpenses = Math.max(0, incomeAfter7UITDeduction - deductibleExpensesSummary.totalDeduction);
@@ -663,7 +663,7 @@ export class SunatCalculator {
         // Mes personalizado especificado Y con valor mayor a 0
         // CORRECCIÓN: Solo considerar si el mes está dentro del período de cálculo
         if (month >= params.calculationMonth) {
-          gratificaciones = params.gratificaciones || 0;
+        gratificaciones = params.gratificaciones || 0;
         }
       } else if (calculateGratificaciones && (month === 7 || month === 12)) {
         // Calcular automáticamente si está marcado el checkbox
@@ -700,7 +700,7 @@ export class SunatCalculator {
         // Mes personalizado especificado Y con valor mayor a 0
         // CORRECCIÓN: Solo considerar si el mes está dentro del período de cálculo
         if (month >= params.calculationMonth) {
-          cts = params.cts || 0;
+        cts = params.cts || 0;
         }
       } else if (calculateCTS && (month === 5 || month === 11)) {
         // Calcular automáticamente si está marcado el checkbox
@@ -724,16 +724,16 @@ export class SunatCalculator {
           // Valor personalizado especificado
           // CORRECCIÓN: Solo considerar si el mes está dentro del período de cálculo
           if (month >= params.calculationMonth) {
-            asignacionFamiliarMensual = params.asignacionFamiliar;
+          asignacionFamiliarMensual = params.asignacionFamiliar;
           }
         } else {
           // Calcular automáticamente
           // CORRECCIÓN: Solo calcular si el mes está dentro del período de cálculo
           if (month >= params.calculationMonth) {
-            if (hasChildren && childrenCount > 0) {
-              asignacionFamiliarMensual = this.ASIGNACION_FAMILIAR_2025 * childrenCount;
-            } else if (childrenStudying && childrenCount > 0) {
-              asignacionFamiliarMensual = this.ASIGNACION_FAMILIAR_2025 * childrenCount;
+          if (hasChildren && childrenCount > 0) {
+            asignacionFamiliarMensual = this.ASIGNACION_FAMILIAR_2025 * childrenCount;
+          } else if (childrenStudying && childrenCount > 0) {
+            asignacionFamiliarMensual = this.ASIGNACION_FAMILIAR_2025 * childrenCount;
             }
           }
         }

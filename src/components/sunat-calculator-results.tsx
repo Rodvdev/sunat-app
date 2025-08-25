@@ -1,10 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { SunatCalculationResult } from '@/lib/sunat-calculator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { TrendingUp, FileText, Receipt, Calculator, TrendingDown, Shield } from 'lucide-react';
+import { TrendingUp, FileText, Calculator, TrendingDown, Shield } from 'lucide-react';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 
 interface SunatCalculatorResultsProps {
@@ -26,6 +26,8 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
   console.log('Complete result object received:', result);
   console.log('Summary data:', result.summary);
   console.log('First month calculation:', result.monthlyCalculations[0]);
+
+  const [isMetodologiaExpanded, setIsMetodologiaExpanded] = useState(false);
 
   return (
     <div className="space-y-8">
@@ -64,236 +66,6 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
         </div>
       </div>
 
-      {/* PASO 2: Donaciones y PASO 3: Créditos Fiscales */}
-      <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
-        <CardHeader className="bg-gradient-to-r from-[#4CAF50] to-[#FF9800] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Metodología SUNAT - Pasos 2 y 3
-          </CardTitle>
-          <CardDescription className="text-white opacity-90">
-            Deducción de 7 UIT, donaciones y aplicación de créditos fiscales
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* PASO 2: Donaciones */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-[#333333] text-lg mb-4 flex items-center gap-2">
-                <span className="bg-[#4CAF50] text-white px-3 py-1 rounded-full text-sm">PASO 2</span>
-                Donaciones (Artículo 49° de la Ley)
-              </h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Deducción 7 UIT</span>
-                  <span className="font-bold text-[#4CAF50]">{formatCurrency(result.summary.deduction7UIT || 7 * 5350)}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Monto de Donaciones</span>
-                  <span className="font-semibold text-[#4CAF50]">
-                    {formatCurrency(result.summary.donations || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Deducción por Donaciones</span>
-                  <span className="font-semibold text-[#4CAF50]">
-                    {formatCurrency(result.summary.donationsDeduction || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-[#4CAF50] text-white rounded-lg">
-                  <span className="text-sm font-semibold">Ingreso Neto Final</span>
-                  <span className="font-bold text-xl">
-                    {formatCurrency(result.summary.finalNetIncome || result.summary.totalAnnualIncome - (7 * 5350) - result.summary.deductibleExpenses.totalDeduction)}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Información sobre donaciones */}
-              <div className="bg-blue-50 border-l-4 border-blue-400 p-4">
-                <div className="text-sm text-blue-700">
-                  <p className="font-medium mb-2">📋 Información Importante sobre Donaciones:</p>
-                  <ul className="space-y-1 text-xs">
-                    <li>• Solo se pueden deducir en diciembre con motivo del ajuste final del impuesto</li>
-                    <li>• Solo aplica para trabajadores que perciben rentas de quinta categoría</li>
-                    <li>• Las donaciones deben estar acreditadas con documentos según el Artículo 21°</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* PASO 3: Créditos Fiscales */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-[#333333] text-lg mb-4 flex items-center gap-2">
-                <span className="bg-[#FF9800] text-white px-3 py-1 rounded-full text-sm">PASO 3</span>
-                Créditos (Artículo 88° de la Ley)
-              </h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Impuesto Anual Proyectado</span>
-                  <span className="font-bold text-[#FF9800]">
-                    {formatCurrency(result.summary.projectedAnnualTax || result.summary.totalAnnualTax)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Total de Créditos Aplicables</span>
-                  <span className="font-semibold text-[#FF9800]">
-                    {formatCurrency(result.summary.totalTaxCredits || 0)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-[#FF9800] text-white rounded-lg">
-                  <span className="text-sm font-semibold">Impuesto Anual Final</span>
-                  <span className="font-bold text-xl">
-                    {formatCurrency(result.summary.finalAnnualTax || result.summary.totalAnnualTax)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Desglose de créditos */}
-              {result.summary.totalTaxCredits > 0 && (
-                <div className="space-y-2">
-                  <h5 className="font-medium text-[#333333] text-sm">Desglose de Créditos:</h5>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#666666]">• Créditos Anteriores:</span>
-                      <span className="font-medium">
-                        {formatCurrency(result.summary.taxCreditsBreakdown?.previousCredits || 0)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#666666]">• Pagos a Cuenta:</span>
-                      <span className="font-medium">
-                        {formatCurrency(result.summary.taxCreditsBreakdown?.previousPayments || 0)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-[#666666]">• Saldos a Favor:</span>
-                      <span className="font-medium">
-                        {formatCurrency(result.summary.taxCreditsBreakdown?.previousRefunds || 0)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Información sobre créditos */}
-              <div className="bg-orange-50 border-l-4 border-orange-400 p-4">
-                <div className="text-sm text-orange-700">
-                  <p className="font-medium mb-2">💳 Información sobre Créditos:</p>
-                  <ul className="space-y-1 text-xs">
-                    <li>• Los créditos se deducen del impuesto anual proyectado</li>
-                    <li>• Solo aplica para trabajadores que perciben rentas de quinta categoría</li>
-                    <li>• Los saldos a favor deben estar reconocidos por SUNAT</li>
-                    <li>• Solo Renta de Quinta Categoría: {result.summary.isOnlyFifthCategoryIncome ? 'Sí' : 'No'}</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tax Rates and Projected Tax Information */}
-      <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
-        <CardHeader className="bg-[#B71C1C] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
-            Tasas de Impuesto y Cálculo Proyectado
-          </CardTitle>
-          <CardDescription className="text-[#FFCDD2]">
-            Escalas progresivas SUNAT 2025 y cálculo del impuesto anual
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Tax Rates */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-[#333333] text-lg mb-4">📊 Escalas Progresivas de Impuesto</h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Hasta 5 UIT (S/ 26,750)</span>
-                  <span className="font-bold text-[#B71C1C]">8%</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Más de 5 hasta 20 UIT (S/ 107,000)</span>
-                  <span className="font-bold text-[#FF9800]">14%</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Más de 20 hasta 35 UIT (S/ 187,250)</span>
-                  <span className="font-bold text-[#F57C00]">17%</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Más de 35 hasta 45 UIT (S/ 240,750)</span>
-                  <span className="font-bold text-[#1976D2]">20%</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Más de 45 UIT</span>
-                  <span className="font-bold text-[#7B1FA2]">30%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Projected Tax Calculation */}
-            <div className="space-y-4">
-              <h4 className="font-semibold text-[#333333] text-lg mb-4">🧮 Cálculo del Impuesto Anual Proyectado</h4>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Remuneración Bruta Anual (RBA)</span>
-                  <span className="font-semibold text-[#2E7D32]">{formatCurrency(result.summary.totalAnnualIncome)}</span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Menos: Deducción 7 UIT</span>
-                  <span className="font-semibold text-red-600">- {formatCurrency(7 * 5350)}</span>
-                </div>
-                {result.summary.deductibleExpenses.totalDeduction > 0 && (
-                  <div className="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <span className="text-sm text-[#666666]">Menos: Gastos Deducibles</span>
-                    <span className="font-semibold text-red-600">- {formatCurrency(result.summary.deductibleExpenses.totalDeduction)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <span className="text-sm text-[#666666] font-semibold">= Base Imponible (RNA)</span>
-                  <span className="font-bold text-[#1976D2]">{formatCurrency(result.summary.totalAnnualIncome - (7 * 5350) - result.summary.deductibleExpenses.totalDeduction)}</span>
-                </div>
-                <div className="flex justify-between items-center p-4 bg-[#B71C1C] text-white rounded-lg">
-                  <span className="text-sm font-semibold">Impuesto Anual Proyectado (Paso 3)</span>
-                  <span className="font-bold text-xl">{formatCurrency(result.summary.projectedAnnualTax || result.summary.totalAnnualTax)}</span>
-                </div>
-                
-                {/* PASO 3: Créditos Fiscales */}
-                {result.summary.totalTaxCredits > 0 && (
-                  <>
-                    <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                      <span className="text-sm text-[#666666]">Menos: Total Créditos Aplicables</span>
-                      <span className="font-semibold text-orange-600">- {formatCurrency(result.summary.totalTaxCredits)}</span>
-                    </div>
-                    <div className="flex justify-between items-center p-4 bg-[#FF9800] text-white rounded-lg">
-                      <span className="text-sm font-semibold">= Impuesto Anual Final</span>
-                      <span className="font-bold text-xl">{formatCurrency(result.summary.finalAnnualTax || result.summary.totalAnnualTax)}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-              
-              {/* Tax Rate Applied */}
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="text-sm text-[#666666]">
-                  <strong>Tasa de Impuesto Aplicada:</strong> 
-                  <span className="ml-2 font-bold text-[#F57C00]">
-                    {(() => {
-                      const rna = result.summary.totalAnnualIncome - (7 * 5350) - result.summary.deductibleExpenses.totalDeduction;
-                      if (rna <= 5 * 5350) return '8%';
-                      if (rna <= 20 * 5350) return '14%';
-                      if (rna <= 35 * 5350) return '17%';
-                      if (rna <= 45 * 5350) return '20%';
-                      return '30%';
-                    })()}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card className="border-[#E0E0E0] shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -488,6 +260,7 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
         </Card>
       )}
 
+
       {/* Sector Público Bonuses */}
       {((result.summary.totalAguinaldo || 0) > 0 || (result.summary.totalBonoEscolaridad || 0) > 0 || (result.summary.totalBonoJudicial || 0) > 0) && (
         <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
@@ -503,48 +276,48 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
           <CardContent className="p-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Aguinaldo */}
-              {(result.summary.totalAguinaldo || 0) > 0 && (
+              {(result.summary.totalAguinaldo ?? 0) > 0 && (
                 <div className="space-y-3">
                   <h4 className="font-medium text-[#333333] mb-3">Aguinaldo</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-[#666666]">Total Anual:</span>
-                      <span className="font-semibold text-[#1976D2]">{formatCurrency(result.summary.totalAguinaldo || 0)}</span>
+                      <span className="font-semibold text-[#1976D2]">{formatCurrency(result.summary.totalAguinaldo ?? 0)}</span>
                     </div>
                     <div className="text-xs text-[#666666] pl-2">
-                      Julio: {formatCurrency(result.summary.totalAguinaldo || 0)}
+                      Julio: {formatCurrency(result.summary.totalAguinaldo ?? 0)}
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Bono por Escolaridad */}
-              {(result.summary.totalBonoEscolaridad || 0) > 0 && (
+              {(result.summary.totalBonoEscolaridad ?? 0) > 0 && (
                 <div className="space-y-3">
                   <h4 className="font-medium text-[#333333] mb-3">Bono por Escolaridad</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-[#666666]">Total Anual:</span>
-                      <span className="font-semibold text-[#1976D2]">{formatCurrency(result.summary.totalBonoEscolaridad || 0)}</span>
+                      <span className="font-semibold text-[#1976D2]">{formatCurrency(result.summary.totalBonoEscolaridad ?? 0)}</span>
                     </div>
                     <div className="text-xs text-[#666666] pl-2">
-                      Mensual: {formatCurrency(result.summary.totalBonoEscolaridad || 0)}
+                      Mensual: {formatCurrency(result.summary.totalBonoEscolaridad ?? 0)}
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Bono Extraordinario Judicial */}
-              {(result.summary.totalBonoJudicial || 0) > 0 && (
+              {(result.summary.totalBonoJudicial ?? 0) > 0 && (
                 <div className="space-y-3">
                   <h4 className="font-medium text-[#333333] mb-3">Bono Judicial</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-[#666666]">Total Anual:</span>
-                      <span className="font-semibold text-[#1976D2]">{formatCurrency(result.summary.totalBonoJudicial || 0)}</span>
+                      <span className="font-semibold text-[#1976D2]">{formatCurrency(result.summary.totalBonoJudicial ?? 0)}</span>
                     </div>
                     <div className="text-xs text-[#666666] pl-2">
-                      Enero: {formatCurrency(result.summary.totalBonoJudicial || 0)}
+                      Enero: {formatCurrency(result.summary.totalBonoJudicial ?? 0)}
                     </div>
                     <div className="text-xs text-[#666666] pl-2 bg-blue-50 p-2 rounded border border-blue-200">
                       <strong>Requisitos:</strong> Personal judicial con ingresos &lt; S/ 2,000, excluyendo cargos directivos
@@ -557,82 +330,193 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
         </Card>
       )}
 
-      {/* Ajustes del Impuesto Anual: Donaciones y Créditos Fiscales */}
+      {/* Ajustes del Impuesto Anual: Donaciones y Créditos Fiscales - Solo mostrar si hay ajustes aplicables */}
+      {(() => {
+        const shouldShow = (result.summary.deductibleExpenses.totalDeduction > 0) || 
+                          (result.summary.donations && result.summary.donations > 0) || 
+                          (result.summary.totalTaxCredits && result.summary.totalTaxCredits > 0);
+        
+        return shouldShow ? true : null;
+      })() && (
+        <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
+          <CardHeader className="bg-gradient-to-r from-[#4CAF50] to-[#FF9800] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Ajustes del Impuesto Anual Proyectado
+            </CardTitle>
+            <CardDescription className="text-white opacity-90">
+              Deducción de 7 UIT, gastos deducibles, donaciones y aplicación de créditos fiscales
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Deducciones y Gastos Deducibles */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-[#333333] text-lg mb-4 flex items-center gap-2">
+                  <span className="bg-[#4CAF50] text-white px-3 py-1 rounded-full text-sm">DEDUCCIONES</span>
+                  Deducción de 7 UIT y Gastos Deducibles (Artículo 46°)
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-sm text-[#666666]">Deducción 7 UIT</span>
+                    <span className="font-bold text-[#4CAF50]">{formatCurrency(result.summary.deduction7UIT || 7 * 5350)}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-sm text-[#666666]">Gastos Deducibles Aplicados</span>
+                    <span className="font-semibold text-[#4CAF50]">
+                      {formatCurrency(result.summary.deductibleExpenses.totalDeduction)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <span className="text-sm text-[#666666]">Total Deducciones</span>
+                    <span className="font-bold text-[#4CAF50]">
+                      {formatCurrency((result.summary.deduction7UIT || 7 * 5350) + result.summary.deductibleExpenses.totalDeduction)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Donaciones y Créditos Fiscales */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-[#333333] text-lg mb-4 flex items-center gap-2">
+                  <span className="bg-[#FF9800] text-white px-3 py-1 rounded-full text-sm">AJUSTES</span>
+                  Donaciones y Créditos Fiscales
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <span className="text-sm text-[#666666]">Monto de Donaciones</span>
+                    <span className="font-semibold text-[#FF9800]">
+                      {result.summary.donations && result.summary.donations > 0 ? formatCurrency(result.summary.donations) : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <span className="text-sm text-[#666666]">Total Créditos Aplicables</span>
+                    <span className="font-semibold text-[#FF9800]">
+                      {result.summary.totalTaxCredits && result.summary.totalTaxCredits > 0 ? formatCurrency(result.summary.totalTaxCredits) : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <span className="text-sm text-[#666666]">Impuesto Anual Final</span>
+                    <span className="font-bold text-[#FF9800]">
+                      {result.summary.finalAnnualTax && result.summary.finalAnnualTax > 0 ? formatCurrency(result.summary.finalAnnualTax) : '-'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Información adicional sobre los ajustes */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <h5 className="font-medium text-[#333333] mb-2">Información sobre los Ajustes:</h5>
+              <div className="text-sm text-[#666666] space-y-1">
+                <p>• <strong>Deducciones:</strong> Se aplican antes del cálculo del impuesto anual (Artículo 46° de la Ley)</p>
+                <p>• <strong>Donaciones:</strong> Solo aplican en diciembre para rentas de quinta categoría (Artículo 49° de la Ley)</p>
+                <p>• <strong>Créditos Fiscales:</strong> Se deducen del impuesto anual proyectado (Artículo 88° de la Ley)</p>
+                <p>• <strong>Impuesto Final:</strong> Resultado después de aplicar todos los ajustes y créditos</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+
+      {/* Tax Rates and Projected Tax Information */}
       <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
-        <CardHeader className="bg-gradient-to-r from-[#4CAF50] to-[#FF9800] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
+        <CardHeader className="bg-[#B71C1C] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Ajustes del Impuesto Anual Proyectado
+            <Calculator className="h-5 w-5" />
+            Tasas de Impuesto y Cálculo Proyectado
           </CardTitle>
-          <CardDescription className="text-white opacity-90">
-            Deducción de 7 UIT, gastos deducibles, donaciones y aplicación de créditos fiscales
+          <CardDescription className="text-[#FFCDD2]">
+            Escalas progresivas SUNAT 2025 y cálculo del impuesto anual
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Deducciones y Gastos Deducibles */}
+            {/* Tax Rates */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#333333] text-lg mb-4 flex items-center gap-2">
-                <span className="bg-[#4CAF50] text-white px-3 py-1 rounded-full text-sm">DEDUCCIONES</span>
-                Deducción de 7 UIT y Gastos Deducibles (Artículo 46°)
-              </h4>
+              <h4 className="font-semibold text-[#333333] text-lg mb-4">Escalas Progresivas de Impuesto</h4>
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Deducción 7 UIT</span>
-                  <span className="font-bold text-[#4CAF50]">{formatCurrency(result.summary.deduction7UIT || 7 * 5350)}</span>
+                <div className="flex justify-between items-center p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Hasta 5 UIT (S/ 26,750)</span>
+                  <span className="font-bold text-[#B71C1C]">8%</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Gastos Deducibles Aplicados</span>
-                  <span className="font-semibold text-[#4CAF50]">
-                    {formatCurrency(result.summary.deductibleExpenses.totalDeduction)}
-                  </span>
+                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Más de 5 hasta 20 UIT (S/ 107,000)</span>
+                  <span className="font-bold text-[#FF9800]">14%</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-green-50 border border-green-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Total Deducciones</span>
-                  <span className="font-bold text-[#4CAF50]">
-                    {formatCurrency((result.summary.deduction7UIT || 7 * 5350) + result.summary.deductibleExpenses.totalDeduction)}
-                  </span>
+                <div className="flex justify-between items-center p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Más de 20 hasta 35 UIT (S/ 187,250)</span>
+                  <span className="font-bold text-[#F57C00]">17%</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Más de 35 hasta 45 UIT (S/ 240,750)</span>
+                  <span className="font-bold text-[#1976D2]">20%</span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Más de 45 UIT</span>
+                  <span className="font-bold text-[#7B1FA2]">30%</span>
                 </div>
               </div>
             </div>
 
-            {/* Donaciones y Créditos Fiscales */}
+            {/* Projected Tax Calculation */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#333333] text-lg mb-4 flex items-center gap-2">
-                <span className="bg-[#FF9800] text-white px-3 py-1 rounded-full text-sm">AJUSTES</span>
-                Donaciones y Créditos Fiscales
-              </h4>
+              <h4 className="font-semibold text-[#333333] text-lg mb-4">Cálculo del Impuesto Anual Proyectado</h4>
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Monto de Donaciones</span>
-                  <span className="font-semibold text-[#FF9800]">
-                    {formatCurrency(result.summary.donations || 0)}
-                  </span>
+                <div className="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Remuneración Bruta Anual (RBA)</span>
+                  <span className="font-semibold text-[#2E7D32]">{formatCurrency(result.summary.totalAnnualIncome)}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Total Créditos Aplicables</span>
-                  <span className="font-semibold text-[#FF9800]">
-                    {formatCurrency(result.summary.totalTaxCredits || 0)}
-                  </span>
+                <div className="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <span className="text-sm text-[#666666]">Menos: Deducción 7 UIT</span>
+                  <span className="font-semibold text-red-600">- {formatCurrency(7 * 5350)}</span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <span className="text-sm text-[#666666]">Impuesto Anual Final</span>
-                  <span className="font-bold text-[#FF9800]">
-                    {formatCurrency(result.summary.finalAnnualTax || 0)}
+                {result.summary.deductibleExpenses.totalDeduction > 0 && (
+                  <div className="flex justify-between items-center p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <span className="text-sm text-[#666666]">Menos: Gastos Deducibles</span>
+                    <span className="font-semibold text-red-600">- {formatCurrency(result.summary.deductibleExpenses.totalDeduction)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <span className="text-sm text-[#666666] font-semibold">= Base Imponible (RNA)</span>
+                  <span className="font-bold text-[#1976D2]">{formatCurrency(result.summary.totalAnnualIncome - (7 * 5350) - result.summary.deductibleExpenses.totalDeduction)}</span>
+                </div>
+                <div className="flex justify-between items-center p-4 bg-[#B71C1C] text-white rounded-lg">
+                  <span className="text-sm font-semibold">Impuesto Anual Proyectado (Paso 3)</span>
+                  <span className="font-bold text-xl">{formatCurrency(result.summary.projectedAnnualTax || result.summary.totalAnnualTax)}</span>
+                </div>
+                
+                {result.summary.totalTaxCredits > 0 && (
+                  <>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <span className="text-sm text-[#666666]">Menos: Total Créditos Aplicables</span>
+                      <span className="font-semibold text-orange-600">- {formatCurrency(result.summary.totalTaxCredits)}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-4 bg-[#FF9800] text-white rounded-lg">
+                      <span className="text-sm font-semibold">= Impuesto Anual Final</span>
+                      <span className="font-bold text-xl">{formatCurrency(result.summary.finalAnnualTax || result.summary.totalAnnualTax)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+              
+              {/* Tax Rate Applied */}
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="text-sm text-[#666666]">
+                  <strong>Tasa de Impuesto Aplicada:</strong> 
+                  <span className="ml-2 font-bold text-[#F57C00]">
+                    {(() => {
+                      const rna = result.summary.totalAnnualIncome - (7 * 5350) - result.summary.deductibleExpenses.totalDeduction;
+                      if (rna <= 5 * 5350) return '8%';
+                      if (rna <= 20 * 5350) return '14%';
+                      if (rna <= 35 * 5350) return '17%';
+                      if (rna <= 45 * 5350) return '20%';
+                      return '30%';
+                    })()}
                   </span>
                 </div>
               </div>
-            </div>
-          </div>
-          
-          {/* Información adicional sobre los ajustes */}
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h5 className="font-medium text-[#333333] mb-2">Información sobre los Ajustes:</h5>
-            <div className="text-sm text-[#666666] space-y-1">
-              <p>• <strong>Deducciones:</strong> Se aplican antes del cálculo del impuesto anual (Artículo 46° de la Ley)</p>
-              <p>• <strong>Donaciones:</strong> Solo aplican en diciembre para rentas de quinta categoría (Artículo 49° de la Ley)</p>
-              <p>• <strong>Créditos Fiscales:</strong> Se deducen del impuesto anual proyectado (Artículo 88° de la Ley)</p>
-              <p>• <strong>Impuesto Final:</strong> Resultado después de aplicar todos los ajustes y créditos</p>
             </div>
           </div>
         </CardContent>
@@ -650,9 +534,6 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8">
-          {/* Debug: Log complete array structure */}
-          {(() => { console.log('Complete monthlyCalculations array:', result.monthlyCalculations); return null; })()}
-          
           {/* Explicación cuando no hay retenciones */}
           {result.summary.totalAnnualRetention === 0 && (
             <div className="mb-6 p-4 bg-[#E8F5E8] border border-[#C8E6C9] rounded-lg">
@@ -677,45 +558,6 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
             </div>
           )}
 
-          {/* Explicación de la metodología SUNAT */}
-          {result.summary.totalAnnualRetention > 0 && (
-            <div className="mb-6 p-4 bg-[#E3F2FD] border border-[#1976D2] rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="text-[#1976D2] mt-0.5">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="text-[#1976D2]">
-                  <h4 className="font-medium mb-2">📋 Metodología SUNAT Completa para Cálculo de Retenciones</h4>
-                  <div className="text-sm space-y-2">
-                    <p><strong>PASO 1 - RBA Proyectada:</strong> Cálculo de remuneración bruta anual incluyendo ingresos adicionales</p>
-                    <p><strong>PASO 2 - Deducción 7 UIT:</strong> Aplicación de deducción fija de 7 UIT y donaciones (solo en diciembre)</p>
-                    <p><strong>PASO 3 - Impuesto y Créditos:</strong> Aplicación de tasas progresivas y deducción de créditos del Artículo 88°</p>
-                    <p><strong>PASO 4 - Fraccionamiento:</strong> Distribución del impuesto anual en retenciones mensuales</p>
-                    <p><strong>PASO 5 - Retenciones Adicionales:</strong> Cálculo de retenciones adicionales para ingresos extraordinarios</p>
-                    
-                    <div className="mt-3 p-3 bg-white bg-opacity-50 rounded border border-[#1976D2]">
-                      <p className="font-medium mb-2">PASO 4 - Retención Ordinaria:</p>
-                      <ul className="list-disc list-inside ml-4 space-y-1 text-xs">
-                        <li><strong>Enero, Febrero y Marzo:</strong> Impuesto Anual Final ÷ 12</li>
-                        <li><strong>Abril:</strong> (IAF - Retenciones enero-marzo) ÷ 9</li>
-                        <li><strong>Mayo, Junio y Julio:</strong> (IAF - Retenciones enero-abril) ÷ 8</li>
-                        <li><strong>Agosto:</strong> (IAF - Retenciones enero-julio) ÷ 5</li>
-                        <li><strong>Setiembre, Octubre y Noviembre:</strong> (IAF - Retenciones enero-agosto) ÷ 4</li>
-                        <li><strong>Diciembre:</strong> IAF - Retenciones enero-noviembre</li>
-                      </ul>
-                      <p className="mt-2 text-xs"><strong>PASO 5 - Retención Adicional:</strong> Solo para ingresos extraordinarios (bonificaciones, utilidades, etc.)</p>
-                      <p className="text-xs opacity-75">
-                        <strong>Total Retención = Retención Ordinaria + Retención Adicional</strong>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -736,18 +578,6 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
               </thead>
               <tbody>
                 {result.monthlyCalculations.map((month, index) => {
-                  // Debug logging for all months
-                  console.log(`Mes ${month.month} (${month.monthName}) - Índice ${index}:`, {
-                    gratificaciones: month.gratificaciones,
-                    cts: month.cts,
-                    asignacionFamiliar: month.asignacionFamiliar,
-                    totalMonthlyIncome: month.totalMonthlyIncome,
-                    monthlyIncome: month.monthlyIncome,
-                    additionalIncome: month.additionalIncome,
-                    monthlyRetention: month.monthlyRetention,
-                    additionalMonthlyRetention: month.additionalMonthlyRetention
-                  });
-                  
                   // Calcular retención ordinaria (total - adicional)
                   const retencionOrdinaria = month.monthlyRetention - (month.additionalMonthlyRetention || 0);
                   
@@ -854,11 +684,11 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
       </Card>
 
       {/* Nota Final sobre Metodología SUNAT */}
-      <Card className="border-[#E0E0E0] shadow-sm">
-        <CardHeader className="bg-gradient-to-r from-[#004C97] to-[#1976D2] text-white">
+      <Card className="border-[#E0E0E0] shadow-sm overflow-hidden px-6">
+        <CardHeader className="bg-gradient-to-r from-[#004C97] to-[#1976D2] text-white -mt-6 -mx-6 px-6 pt-6 pb-4">
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            📋 Información Legal y Metodología SUNAT
+            Información Legal y Metodología SUNAT
           </CardTitle>
           <CardDescription className="text-white opacity-90">
             Base legal y metodología completa para el cálculo de retenciones
@@ -903,7 +733,7 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
 
             {/* Metodología Completa */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#333333] text-lg mb-3">🧮 Metodología SUNAT - 5 Pasos</h4>
+              <h4 className="font-semibold text-[#333333] text-lg mb-3">Metodología SUNAT - 5 Pasos</h4>
               <div className="space-y-3 text-sm">
                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
@@ -967,7 +797,7 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                 </svg>
               </div>
               <div className="text-yellow-800">
-                <h5 className="font-medium mb-2">⚠️ Nota Importante</h5>
+                <h5 className="font-medium mb-2">Nota Importante</h5>
                 <p className="text-sm">
                   Este cálculo está basado en la metodología oficial de SUNAT para el ejercicio 2025. 
                   Los resultados son informativos y deben ser verificados por un contador o asesor fiscal. 
