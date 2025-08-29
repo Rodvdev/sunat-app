@@ -662,29 +662,6 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8">
-          {/* Explicación de la nueva lógica de recálculo */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="text-blue-600 mt-0.5">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="text-blue-800">
-                <h4 className="font-medium mb-2">🔄 Nueva Lógica de Recálculo SUNAT</h4>
-                <p className="text-sm mb-2">
-                  <strong>Haz hover sobre cualquier fila de la tabla para ver el cálculo detallado del mes.</strong>
-                </p>
-                <div className="text-xs space-y-1">
-                  <p>• <strong>Meses Base:</strong> Retención uniforme del impuesto anual proyectado</p>
-                  <p>• <strong>Mes con Ingreso Adicional:</strong> Se recalcula la retención para distribuir la diferencia de impuesto</p>
-                  <p>• <strong>Meses Posteriores:</strong> Continúan con la retención recalculada</p>
-                  <p>• <strong>Retención Adicional:</strong> Se aplica solo en el mes del ingreso extraordinario (PASO 5 SUNAT)</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* Explicación cuando no hay retenciones */}
           {result.summary.totalAnnualRetention === 0 && (
             <div className="mb-6 p-4 bg-[#E8F5E8] border border-[#C8E6C9] rounded-lg">
