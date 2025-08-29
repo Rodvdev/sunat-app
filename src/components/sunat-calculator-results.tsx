@@ -4,6 +4,7 @@ import { SunatCalculationResult } from '@/lib/sunat-calculator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp, FileText, Calculator, TrendingDown, Shield } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface SunatCalculatorResultsProps {
   result: SunatCalculationResult;
@@ -18,6 +19,137 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
     }).format(amount);
   };
 
+  // Función para generar el tooltip detallado de cada mes
+  const generateMonthTooltip = (month: SunatCalculationResult['monthlyCalculations'][0], index: number, allMonths: SunatCalculationResult['monthlyCalculations']) => {
+    const hasPreviousAdditionalIncome = allMonths.slice(0, index).some(m => m.additionalIncome > 0);
+    const isFirstAdditionalIncomeMonth = month.additionalIncome > 0 && !hasPreviousAdditionalIncome;
+    const isAfterAdditionalIncome = hasPreviousAdditionalIncome && month.additionalIncome === 0;
+    
+    return (
+      <div className="w-96 max-w-md bg-white border border-[#E0E0E0] rounded-lg shadow-xl p-6 mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#E0E0E0]">
+          <div className="w-3 h-3 bg-[#004C97] rounded-full"></div>
+          <h3 className="text-lg font-semibold text-[#333333]">
+            📅 {month.monthName} - Cálculo Detallado
+          </h3>
+        </div>
+
+        {/* Ingresos del Mes */}
+        <div className="mb-4">
+          <h4 className="font-medium text-[#333333] mb-2 text-sm">💰 Ingresos del Mes</h4>
+          <div className="space-y-1 text-sm">
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Sueldo Base:</span>
+              <span className="font-medium text-[#2E7D32]">{formatCurrency(month.monthlyIncome)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Ingreso Adicional:</span>
+              <span className="font-medium text-[#FF9800]">
+                {month.additionalIncome > 0 ? formatCurrency(month.additionalIncome) : 'S/ 0.00'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Gratificaciones:</span>
+              <span className="font-medium text-[#FF9800]">
+                {month.gratificaciones > 0 ? formatCurrency(month.gratificaciones) : 'S/ 0.00'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">CTS:</span>
+              <span className="font-medium text-[#FF9800]">
+                {month.cts > 0 ? formatCurrency(month.cts) : 'S/ 0.00'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#666666]">Asignación Familiar:</span>
+              <span className="font-medium text-[#FF9800]">
+                {month.asignacionFamiliar > 0 ? formatCurrency(month.asignacionFamiliar) : 'S/ 0.00'}
+              </span>
+            </div>
+            <div className="flex justify-between pt-2 border-t border-[#E0E0E0]">
+              <span className="font-medium text-[#333333]">Total del Mes:</span>
+              <span className="font-bold text-[#2E7D32] text-lg">{formatCurrency(month.totalMonthlyIncome)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Explicación del Cálculo */}
+        <div className="mb-4">
+          {month.additionalIncome > 0 ? (
+            <div className="space-y-3">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-[#004C97] mb-2 text-sm">🔄 Recálculo por Ingreso Adicional</h4>
+                <div className="space-y-1 text-xs text-[#666666]">
+                  <div>• RBA Original: {formatCurrency(month.monthlyIncome * 12)}</div>
+                  <div>• RBA + Ingreso Adicional: {formatCurrency(month.monthlyIncome * 12 + month.additionalIncome)}</div>
+                  <div>• Impuesto Anual Recalculado: {formatCurrency(month.monthlyRetention * (13 - month.month))}</div>
+                  <div>• Meses Restantes: {13 - month.month}</div>
+                  <div>• Retención Mensual: {formatCurrency(month.monthlyRetention)}</div>
+                </div>
+              </div>
+              
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <h4 className="font-medium text-[#4CAF50] mb-2 text-sm">📊 Distribución del Impuesto Adicional</h4>
+                <div className="space-y-1 text-xs text-[#666666]">
+                  <div>• Se distribuye la diferencia de impuesto desde este mes en adelante</div>
+                  <div>• Retención Ordinaria: {formatCurrency(month.monthlyRetention)}</div>
+                  <div>• Retención Adicional: {formatCurrency(month.additionalMonthlyRetention || 0)}</div>
+                  <div>• Total: {formatCurrency(month.monthlyRetention)}</div>
+                </div>
+              </div>
+            </div>
+          ) : hasPreviousAdditionalIncome ? (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <h4 className="font-medium text-[#4CAF50] mb-2 text-sm">📈 Continuación con Impuesto Recalculado</h4>
+              <div className="space-y-1 text-xs text-[#666666]">
+                <div>• Ya se recibió ingreso adicional en mes anterior</div>
+                <div>• Se mantiene la retención recalculada</div>
+                <div>• Retención Mensual: {formatCurrency(month.monthlyRetention)}</div>
+              </div>
+            </div>
+          ) : (
+            <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <h4 className="font-medium text-[#4CAF50] mb-2 text-sm">📋 Cálculo Base (Sin Ingresos Adicionales)</h4>
+              <div className="space-y-1 text-xs text-[#666666]">
+                <div>• RBA Base: {formatCurrency(month.monthlyIncome * 12)}</div>
+                <div>• Impuesto Anual Base: {formatCurrency(month.monthlyRetention * 12)}</div>
+                <div>• Retención Mensual: {formatCurrency(month.monthlyRetention)}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Retención Adicional */}
+        {month.additionalMonthlyRetention > 0 && (
+          <div className="mb-4">
+            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+              <h4 className="font-medium text-[#FF9800] mb-2 text-sm">💰 Retención Adicional (PASO 5 SUNAT)</h4>
+              <div className="space-y-1 text-xs text-[#666666]">
+                <div>• Ingreso Extraordinario: {formatCurrency(month.additionalIncome)}</div>
+                <div>• Diferencia de Impuesto: {formatCurrency(month.additionalMonthlyRetention)}</div>
+                <div>• Se aplica solo en este mes</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="pt-3 border-t border-[#E0E0E0]">
+          <div className="text-xs text-[#666666] bg-blue-50 p-2 rounded border border-blue-200">
+            <span className="font-medium text-[#004C97]">💡 Metodología SUNAT:</span>{' '}
+            {isFirstAdditionalIncomeMonth 
+              ? 'Recálculo progresivo desde este mes' 
+              : hasPreviousAdditionalIncome 
+                ? 'Continuación con impuesto recalculado' 
+                : 'Cálculo base sin ajustes'
+            }
+          </div>
+        </div>
+      </div>
+    );
+  };
+
 
   // Debug: Log complete result object
   console.log('Complete result object received:', result);
@@ -26,7 +158,8 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
 
 
   return (
-    <div className="space-y-8">
+    <TooltipProvider>
+      <div className="space-y-8">
 
       {/* UIT Information - Moved to top for better context */}
       <div className="border border-blue-200 rounded-lg bg-blue-50">
@@ -526,10 +659,33 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
             Detalle Mensual
           </CardTitle>
           <CardDescription className="text-[#E3F2FD]">
-            Desglose de retenciones por mes
+            Desglose de retenciones por mes • Hover sobre cada fila para ver el cálculo detallado
           </CardDescription>
         </CardHeader>
         <CardContent className="p-8">
+          {/* Explicación de la nueva lógica de recálculo */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="text-blue-600 mt-0.5">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="text-blue-800">
+                <h4 className="font-medium mb-2">🔄 Nueva Lógica de Recálculo SUNAT</h4>
+                <p className="text-sm mb-2">
+                  <strong>Haz hover sobre cualquier fila de la tabla para ver el cálculo detallado del mes.</strong>
+                </p>
+                <div className="text-xs space-y-1">
+                  <p>• <strong>Meses Base:</strong> Retención uniforme del impuesto anual proyectado</p>
+                  <p>• <strong>Mes con Ingreso Adicional:</strong> Se recalcula la retención para distribuir la diferencia de impuesto</p>
+                  <p>• <strong>Meses Posteriores:</strong> Continúan con la retención recalculada</p>
+                  <p>• <strong>Retención Adicional:</strong> Se aplica solo en el mes del ingreso extraordinario (PASO 5 SUNAT)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Explicación cuando no hay retenciones */}
           {result.summary.totalAnnualRetention === 0 && (
             <div className="mb-6 p-4 bg-[#E8F5E8] border border-[#C8E6C9] rounded-lg">
@@ -558,7 +714,13 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-[#E0E0E0]">
-                  <th className="text-left py-2 px-2 text-[#333333] font-medium">Mes</th>
+                  <th className="text-left py-2 px-2 text-[#333333] font-medium">
+                    Mes
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-blue-600 font-normal">(hover para detalles)</span>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                    </div>
+                  </th>
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Ingreso Base</th>
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Adicional</th>
                   <th className="text-right py-2 px-2 text-[#333333] font-medium">Gratificaciones</th>
@@ -572,43 +734,58 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                 </tr>
               </thead>
               <tbody>
-                {result.monthlyCalculations.map((month) => {
+                {result.monthlyCalculations.map((month, index) => {
                   const retencionOrdinaria = month.monthlyRetention - (month.additionalMonthlyRetention || 0);
                   
                   return (
-                    <tr key={month.month} className="border-b border-[#E0E0E0] hover:bg-[#E3F2FD] transition-colors duration-200">
-                      <td className="py-2 px-2 font-medium text-[#333333]">{month.monthName}</td>
-                      <td className="py-2 px-2 text-right text-[#666666]">{formatCurrency(month.monthlyIncome)}</td>
-                      <td className="py-2 px-2 text-right text-[#666666]">
-                        {month.additionalIncome > 0 ? formatCurrency(month.additionalIncome) : '-'}
-                      </td>
-                      <td className="py-2 px-2 text-right text-[#FF9800]">
-                        {month.gratificaciones > 0 ? formatCurrency(month.gratificaciones) : '-'}
-                      </td>
-                      <td className="py-2 px-2 text-right text-[#FF9800]">
-                        {month.cts > 0 ? formatCurrency(month.cts) : '-'}
-                      </td>
-                      <td className="py-2 px-2 text-right text-[#FF9800]">
-                        {month.asignacionFamiliar > 0 ? formatCurrency(month.asignacionFamiliar) : '-'}
-                      </td>
-                      <td className="py-2 px-2 text-right text-[#FF9800]">
-                        {(month.aguinaldo || 0) + (month.bonoEscolaridad || 0) + (month.bonoJudicial || 0) > 0 
-                          ? formatCurrency((month.aguinaldo || 0) + (month.bonoEscolaridad || 0) + (month.bonoJudicial || 0)) 
-                          : '-'}
-                      </td>
-                      <td className="py-2 px-2 text-right font-semibold text-[#2E7D32]">
-                        {formatCurrency(month.totalMonthlyIncome)}
-                      </td>
-                      <td className="py-2 px-2 text-right font-semibold text-[#004C97]">
-                        {formatCurrency(retencionOrdinaria)}
-                      </td>
-                      <td className="py-2 px-2 text-right font-semibold text-[#FF9800]">
-                        {month.additionalMonthlyRetention > 0 ? formatCurrency(month.additionalMonthlyRetention) : '-'}
-                      </td>
-                      <td className="py-2 px-2 text-right font-bold text-[#B71C1C]">
-                        {formatCurrency(month.monthlyRetention)}
-                      </td>
-                    </tr>
+                    <Tooltip key={month.month}>
+                      <TooltipTrigger asChild>
+                        <tr className="border-b border-[#E0E0E0] hover:bg-[#E3F2FD] hover:shadow-sm transition-all duration-200 cursor-help group">
+                                                      <td className="py-2 px-2 font-medium text-[#333333] group-hover:text-[#004C97] transition-colors duration-200">
+                              {month.monthName}
+                            </td>
+                          <td className="py-2 px-2 text-right text-[#666666]">{formatCurrency(month.monthlyIncome)}</td>
+                          <td className="py-2 px-2 text-right text-[#666666]">
+                            {month.additionalIncome > 0 ? formatCurrency(month.additionalIncome) : '-'}
+                          </td>
+                          <td className="py-2 px-2 text-right text-[#FF9800]">
+                            {month.gratificaciones > 0 ? formatCurrency(month.gratificaciones) : '-'}
+                          </td>
+                          <td className="py-2 px-2 text-right text-[#FF9800]">
+                            {month.cts > 0 ? formatCurrency(month.cts) : '-'}
+                          </td>
+                          <td className="py-2 px-2 text-right text-[#FF9800]">
+                            {month.asignacionFamiliar > 0 ? formatCurrency(month.asignacionFamiliar) : '-'}
+                          </td>
+                          <td className="py-2 px-2 text-right text-[#FF9800]">
+                            {(month.aguinaldo || 0) + (month.bonoEscolaridad || 0) + (month.bonoJudicial || 0) > 0 
+                              ? formatCurrency((month.aguinaldo || 0) + (month.bonoEscolaridad || 0) + (month.bonoJudicial || 0)) 
+                              : '-'}
+                          </td>
+                          <td className="py-2 px-2 text-right font-semibold text-[#2E7D32]">
+                            {formatCurrency(month.totalMonthlyIncome)}
+                          </td>
+                          <td className="py-2 px-2 text-right font-semibold text-[#004C97]">
+                            {formatCurrency(retencionOrdinaria)}
+                          </td>
+                          <td className="py-2 px-2 text-right font-semibold text-[#FF9800]">
+                            {month.additionalMonthlyRetention > 0 ? formatCurrency(month.additionalMonthlyRetention) : '-'}
+                          </td>
+                          <td className="py-2 px-2 text-right font-bold text-[#B71C1C]">
+                            {formatCurrency(month.monthlyRetention)}
+                          </td>
+                        </tr>
+                      </TooltipTrigger>
+                      <TooltipContent 
+                        className="max-w-md p-0" 
+                        side="top"
+                        align="center"
+                        sideOffset={10}
+                        alignOffset={0}
+                      >
+                        {generateMonthTooltip(month, index, result.monthlyCalculations)}
+                      </TooltipContent>
+                    </Tooltip>
                   );
                 })}
               </tbody>
@@ -698,15 +875,16 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
 
             {/* Metodología Completa */}
             <div className="space-y-4">
-              <h4 className="font-semibold text-[#333333] text-lg mb-3">Metodología SUNAT - 5 Pasos</h4>
+              <h4 className="font-semibold text-[#333333] text-lg mb-3">Metodología SUNAT - 5 Pasos (Actualizada)</h4>
               <div className="space-y-3 text-sm">
                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-[#004C97] text-white px-2 py-1 rounded text-xs font-bold">PASO 1</span>
-                    <span className="font-medium">RBA Proyectada</span>
+                    <span className="font-medium">RBA Proyectada (Solo Ingresos Ordinarios)</span>
                   </div>
                   <p className="text-[#666666]">
-                    Cálculo de remuneración bruta anual incluyendo ingresos adicionales, gratificaciones, CTS y asignación familiar.
+                    <strong>CORRECCIÓN:</strong> RBA solo incluye sueldo + gratificaciones + asignación familiar. 
+                    <strong>NO incluye:</strong> CTS (no gravada), ingresos adicionales (van por Paso 5), conceptos extraordinarios.
                   </p>
                 </div>
                 
@@ -723,30 +901,36 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-[#FF9800] text-white px-2 py-1 rounded text-xs font-bold">PASO 3</span>
-                    <span className="font-medium">Impuesto y Créditos</span>
+                    <span className="font-medium">Impuesto Progresivo por Tramos</span>
                   </div>
                   <p className="text-[#666666]">
-                    Aplicación de tasas progresivas del Artículo 53° y deducción de créditos del Artículo 88°.
+                    <strong>CORRECCIÓN:</strong> Uso de cálculo progresivo por tramos (8%, 14%, 17%, 20%, 30%) 
+                    en lugar de tasa plana. Aplicación de créditos del Artículo 88°.
                   </p>
                 </div>
                 
                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-[#9C27B0] text-white px-2 py-1 rounded text-xs font-bold">PASO 4</span>
-                    <span className="font-medium">Fraccionamiento</span>
+                    <span className="font-medium">Fraccionamiento Inteligente</span>
                   </div>
                   <p className="text-[#666666]">
-                    Distribución progresiva del impuesto anual en retenciones mensuales según la metodología SUNAT.
+                    <strong>CORRECCIÓN:</strong> Distribución progresiva del impuesto anual. 
+                    <strong>Meses base:</strong> Retención uniforme. 
+                    <strong>Mes con ingreso adicional:</strong> Recalculo para distribuir diferencia. 
+                    <strong>Meses posteriores:</strong> Continúan con retención recalculada.
                   </p>
                 </div>
                 
                 <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="bg-[#F44336] text-white px-2 py-1 rounded text-xs font-bold">PASO 5</span>
-                    <span className="font-medium">Retenciones Adicionales</span>
+                    <span className="font-medium">Retenciones Adicionales (Sin Tope 30%)</span>
                   </div>
                   <p className="text-[#666666]">
-                    Cálculo de retenciones adicionales para ingresos extraordinarios (bonificaciones, utilidades, etc.).
+                    <strong>CORRECCIÓN:</strong> Cálculo de retenciones adicionales para ingresos extraordinarios 
+                    (bonificaciones, utilidades, etc.) sin tope artificial del 30%. 
+                    Se aplica solo en el mes del ingreso extraordinario.
                   </p>
                 </div>
               </div>
@@ -771,8 +955,30 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
               </div>
             </div>
           </div>
+
+          {/* Resumen de Correcciones Implementadas */}
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-start gap-3">
+              <div className="text-green-600 mt-0.5">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="text-green-800">
+                <h5 className="font-medium mb-2">✅ Correcciones Implementadas</h5>
+                <div className="text-sm space-y-1">
+                  <p>• <strong>Impuesto Progresivo:</strong> Reemplazado tasa plana por cálculo progresivo por tramos</p>
+                  <p>• <strong>RBA Limpia:</strong> Excluidos ingresos extraordinarios y CTS de la base imponible</p>
+                  <p>• <strong>Recálculo Inteligente:</strong> Retenciones se ajustan solo desde el mes del ingreso adicional</p>
+                  <p>• <strong>Sin Tope 30%:</strong> Eliminado límite artificial en retenciones adicionales</p>
+                  <p>• <strong>Metodología SUNAT:</strong> Implementada lógica correcta de fraccionamiento progresivo</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </TooltipProvider>
   );
 }
