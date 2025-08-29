@@ -528,27 +528,27 @@ export class SunatCalculator {
     const projectedAsignacionFamiliar = calculateAsignacionFamiliar ? 
       (asignacionFamiliar * remainingMonths) : 0;
     
-    // PASO 1.5: Sumar ingresos adicionales por mes (participaciones, reintegros, etc.)
-    // Solo considerar ingresos adicionales desde el mes de cálculo hasta diciembre
-    const projectedAdditionalIncome = this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth, params.calculationMonth);
+    // PASO 1.5: CORRECCIÓN - NO incluir ingresos adicionales por mes en la RBA ordinaria
+    // Los ingresos adicionales se calculan por separado en el Paso 5 (retención adicional)
+    // const projectedAdditionalIncome = this.calculateTotalAdditionalIncomeByMonth(params.additionalIncomeByMonth, params.calculationMonth);
     
-    // PASO 1.6: Sumar otros conceptos extraordinarios (bonificaciones, utilidades, aguinaldo, bono escolaridad)
-    // Estos conceptos se consideran una sola vez al año, no se multiplican por meses
-    const projectedExtraordinaryIncome = (params.bonificaciones || 0) + 
-      (params.utilidades || 0) + 
-        totalAguinaldo +
-      totalBonoEscolaridad + 
-      totalBonoJudicial;
+    // PASO 1.6: CORRECCIÓN - Solo incluir conceptos ordinarios en la RBA
+    // Bonificaciones, utilidades, aguinaldo, bono escolaridad son extraordinarios
+    // y van por el Paso 5, NO en la RBA ordinaria
+    // const projectedExtraordinaryIncome = (params.bonificaciones || 0) + 
+    //   (params.utilidades || 0) + 
+    //     totalAguinaldo +
+    //   totalBonoEscolaridad + 
+    //   totalBonoJudicial;
     
-    // PASO 1.7: Calcular RBA total proyectada
-    // RBA = Remuneración ordinaria proyectada + Gratificaciones + CTS + Asignación familiar + 
-    //        Ingresos adicionales + Conceptos extraordinarios
+    // PASO 1.7: CORRECCIÓN - RBA solo para ingresos ordinarios
+    // RBA = Remuneración ordinaria proyectada + Gratificaciones + Asignación familiar
+    // NO incluir: CTS (no gravada), ingresos adicionales (Paso 5), conceptos extraordinarios (Paso 5)
     const rbaFullYear = projectedOrdinaryIncome + 
       projectedGratificaciones + 
-      projectedCTS + 
-      projectedAsignacionFamiliar + 
-      projectedAdditionalIncome + 
-      projectedExtraordinaryIncome;
+      /* projectedCTS + */ // ❌ CTS no es gravada
+      projectedAsignacionFamiliar;
+      /* + projectedAdditionalIncome + projectedExtraordinaryIncome */ // ❌ Van por Paso 5
       
       // RBA para los meses que realmente trabaja - para cálculos mensuales
     // (mantener compatibilidad con código existente)
@@ -592,8 +592,8 @@ export class SunatCalculator {
     
     // PASO 2.7: Calcular impuesto anual proyectado
     // El impuesto se calcula sobre el ingreso neto final usando las escalas progresivas de SUNAT
-    const applicableTaxRate = this.calculateEffectiveTaxRateByTramo(finalNetIncome);
-    const projectedAnnualTax = finalNetIncome * applicableTaxRate;
+    // CORRECCIÓN: Usar cálculo progresivo por tramos, NO tasa plana
+    const projectedAnnualTax = this.calculateProgressiveTax(finalNetIncome);
     
     // PASO 3 SUNAT: Aplicar tasas del Artículo 53° y créditos del Artículo 88°
     // ============================================================================
@@ -642,6 +642,12 @@ export class SunatCalculator {
     
     // Calculate for each month from calculation month to December (or contract end month if limited)
     const endMonth = (isLimitedContract && contractEndMonth) ? Math.min(contractEndMonth, 12) : 12;
+    
+    // Variables para mantener la RBA recalculada entre meses
+    let currentRBA = rbaFullYear;
+    let currentFinalAnnualTax = finalAnnualTax;
+    let currentFinalNetIncome = finalNetIncome;
+    
     for (let month = params.calculationMonth; month <= endMonth; month++) {
       const monthIndex = month - 1;
       const monthName = this.MONTH_NAMES[monthIndex];
@@ -649,6 +655,48 @@ export class SunatCalculator {
       // Calculate monthly income and additional income types
       const monthlyIncome = params.monthlyIncome;
       const additionalIncome = this.getAdditionalIncomeForMonth(month, params.additionalIncomeByMonth, params.calculationMonth);
+      
+      // NUEVA IMPLEMENTACIÓN: Recalcular RBA dinámicamente si hay ingresos adicionales
+      // =============================================================================
+      // Cuando se recibe un ingreso adicional en un mes específico, la RBA debe recalcularse
+      // a partir de ese mes para ajustar las retenciones mensuales subsiguientes
+      if (additionalIncome > 0) {
+        // CORRECCIÓN: La RBA recalculada debe incluir el ingreso adicional del mes actual
+        // pero mantener la proyección anual completa, no solo desde el mes actual
+        
+        // PASO 1: Calcular RBA original (sin ingreso adicional)
+        const rbaOriginal = rbaFullYear;
+        
+        // PASO 2: Calcular RBA recalculada incluyendo el ingreso adicional
+        // La RBA recalculada debe ser mayor que la original
+        // IMPORTANTE: Acumular con ingresos adicionales previos
+        const rbaRecalculada = currentRBA + additionalIncome;
+
+        
+        
+        // PASO 3: Recalcular ingreso neto y impuesto anual con la nueva RBA
+        const recalculatedIncomeAfter7UIT = Math.max(0, rbaRecalculada - deduction7UIT);
+        const recalculatedIncomeAfterDeductibles = Math.max(0, recalculatedIncomeAfter7UIT - deductibleExpensesSummary.totalDeduction);
+        // CORRECCIÓN: Usar cálculo progresivo por tramos, NO tasa plana
+        const recalculatedAnnualTax = this.calculateProgressiveTax(recalculatedIncomeAfterDeductibles);
+        const recalculatedFinalTax = Math.max(0, recalculatedAnnualTax - totalTaxCredits);
+        
+        // Actualizar variables para el cálculo mensual
+        currentRBA = rbaRecalculada;
+        currentFinalAnnualTax = recalculatedFinalTax;
+        currentFinalNetIncome = recalculatedIncomeAfterDeductibles;
+        
+        console.log(`🔄 MES ${month} (${monthName}): RBA recalculada por ingreso adicional de S/ ${additionalIncome}`);
+        console.log(`   • RBA Original: S/ ${rbaOriginal.toFixed(2)}`);
+        console.log(`   • RBA Recalculada: S/ ${currentRBA.toFixed(2)}`);
+        console.log(`   • Diferencia: S/ ${(currentRBA - rbaOriginal).toFixed(2)}`);
+        console.log(`   • Impuesto Anual Original: S/ ${finalAnnualTax.toFixed(2)}`);
+        console.log(`   • Impuesto Anual Recalculado: S/ ${currentFinalAnnualTax.toFixed(2)}`);
+        console.log(`   • Diferencia Impuesto: S/ ${(currentFinalAnnualTax - finalAnnualTax).toFixed(2)}`);
+      }
+      
+      // IMPORTANTE: Usar la RBA recalculada para todos los cálculos mensuales
+      // La RBA recalculada se mantiene hasta que se reciba otro ingreso adicional
       
       // Calculate gratificaciones (Julio y Diciembre por defecto)
       let gratificaciones = 0;
@@ -767,14 +815,51 @@ export class SunatCalculator {
       // Total monthly income
       const totalMonthlyIncome = monthlyIncome + additionalIncome + gratificaciones + bonificaciones + utilidades + cts + asignacionFamiliarMensual + aguinaldo + bonoEscolaridad + bonoJudicial;
       
-      // Calcular retención mensual según metodología SUNAT
-      const monthlyRetention = this.calculateMonthlyRetention(
-        month,
-        finalAnnualTax, // Pass finalAnnualTax
-        accumulatedRetentions,
-        params.calculationMonth,
-        monthlyCalculations
-      );
+      // CORRECCIÓN COMPLETA: Implementar metodología SUNAT correcta para retención mensual
+      // 
+      // CASO 1: Meses ANTES del primer ingreso adicional → usar impuesto base
+      // CASO 2: Mes del ingreso adicional → recalcular retención para distribuir diferencia
+      // CASO 3: Meses DESPUÉS del ingreso adicional → continuar con retención recalculada
+      
+      let monthlyRetention: number;
+      const hasPreviousAdditionalIncome = monthlyCalculations.some(calc => calc.additionalIncome > 0);
+      
+      if (!hasPreviousAdditionalIncome && additionalIncome === 0) {
+        // CASO 1: Meses ANTES del primer ingreso adicional
+        // Usar impuesto anual base (sin ingresos extraordinarios)
+        monthlyRetention = this.calculateMonthlyRetention(
+          month,
+          finalAnnualTax, // Impuesto base (solo sueldo ordinario)
+          accumulatedRetentions,
+          params.calculationMonth,
+          monthlyCalculations
+        );
+      } else if (additionalIncome > 0) {
+        // CASO 2: Mes del ingreso adicional
+        // Recalcular retención para distribuir la diferencia de impuesto desde este mes en adelante
+        const monthsRemaining = 13 - month; // Meses restantes (incluyendo el actual)
+        const previousRetentions = accumulatedRetentions;
+        const remainingTax = currentFinalAnnualTax - previousRetentions;
+        
+        // Distribuir el impuesto restante entre los meses que quedan
+        monthlyRetention = remainingTax / monthsRemaining;
+        
+        console.log(`🔍 RECÁLCULO RETENCIÓN MES ${month} (${monthName}):`);
+        console.log(`   • Impuesto Anual Recalculado: S/ ${currentFinalAnnualTax.toFixed(2)}`);
+        console.log(`   • Retenciones Previas: S/ ${previousRetentions.toFixed(2)}`);
+        console.log(`   • Impuesto Restante: S/ ${remainingTax.toFixed(2)}`);
+        console.log(`   • Meses Restantes: ${monthsRemaining}`);
+        console.log(`   • Retención Mensual: S/ ${monthlyRetention.toFixed(2)}`);
+      } else {
+        // CASO 3: Meses DESPUÉS del ingreso adicional
+        // Continuar con la retención recalculada
+        const monthsRemaining = 13 - month; // Meses restantes
+        const previousRetentions = accumulatedRetentions;
+        const remainingTax = currentFinalAnnualTax - previousRetentions;
+        
+        // Distribuir el impuesto restante entre los meses que quedan
+        monthlyRetention = remainingTax / monthsRemaining;
+      }
       
       // Calcular retención adicional por ingresos extraordinarios (PASO 5 SUNAT)
       // Considerar TODOS los tipos de ingresos extraordinarios para el cálculo
@@ -787,12 +872,12 @@ export class SunatCalculator {
       // siguiendo el procedimiento establecido en la normativa
       const additionalMonthlyRetention = this.calculateAdditionalMonthlyRetention(
         month,
-        finalAnnualTax, // Impuesto anual final después de créditos (Paso 3)
+        currentFinalAnnualTax, // Usar impuesto anual recalculado si aplica
         extraordinaryIncome, // Ingresos extraordinarios del mes
-        totalProjectedAnnualIncome, // RBA total proyectada (Paso 1)
-        finalNetIncome, // Ingreso neto final después de deducciones (Paso 2)
+        currentRBA, // Usar RBA recalculada si aplica
+        currentFinalNetIncome, // Usar ingreso neto recalculado si aplica
         monthlyRetention, // Retención ordinaria ya calculada (Paso 4)
-        rbaFullYear, // RBA del Paso 1
+        currentRBA, // Usar RBA recalculada si aplica
         deduction7UIT, // Deducción de 7 UIT del Paso 2
         totalTaxCredits // Total de créditos del Paso 3
       );
@@ -833,9 +918,9 @@ export class SunatCalculator {
         cts,
         asignacionFamiliar: asignacionFamiliarMensual,
         totalMonthlyIncome,
-        projectedAccumulatedIncome: totalProjectedAnnualIncome,
-        projectedNetIncome: finalNetIncome, // Usar finalNetIncome aquí
-        projectedTax: projectedAnnualTax,
+        projectedAccumulatedIncome: currentRBA, // Usar RBA recalculada si aplica
+        projectedNetIncome: currentFinalNetIncome, // Usar ingreso neto recalculado si aplica
+        projectedTax: currentFinalAnnualTax, // Usar impuesto anual recalculado si aplica
         expectedAccumulatedRetention: accumulatedRetentions,
         previousAccumulatedRetention: accumulatedRetentions - totalMonthlyRetention,
         monthlyRetention: totalMonthlyRetention, // Ahora incluye retención básica + adicional
@@ -998,10 +1083,8 @@ export class SunatCalculator {
   }
 
   /**
-   * Calcula la retención mensual según la metodología de SUNAT
+   * Calcula la retención mensual según metodología SUNAT
    * PASO 4: Fraccionamiento del impuesto anual en retenciones mensuales
-   * Considera las retenciones previas y distribuye el impuesto anual de manera progresiva
-   * según la metodología establecida por SUNAT
    */
   private calculateMonthlyRetention(
     month: number,
@@ -1027,43 +1110,74 @@ export class SunatCalculator {
       return 0;
     }
     
-    // PASO 4: Aplicar metodología SUNAT exacta según el mes
-    // El fraccionamiento se hace de manera progresiva para distribuir la carga tributaria
+    // OPTIMIZACIÓN: Para casos simples (sueldo fijo sin ingresos adicionales)
+    // usar un cálculo más directo y consistente
+    // Verificar si es un caso simple (sueldo fijo sin ingresos adicionales)
+    const isSimpleCase = monthlyCalculations.length === 0 || 
+      monthlyCalculations.every(calc => 
+        calc.additionalIncome === 0 && 
+        calc.gratificaciones === 0 && 
+        calc.bonificaciones === 0 && 
+        calc.utilidades === 0 && 
+        calc.cts === 0
+      );
     
-    if (month === 1 || month === 2 || month === 3) {
-      // 1. Enero, Febrero y Marzo: Impuesto Anual Final ÷ 12
-      // Se distribuye uniformemente en los primeros tres meses
-      monthlyRetention = finalAnnualTax / 12;
-    } else if (month === 4) {
-      // 2. Abril: (IAF - Retenciones enero-marzo) ÷ 9
-      // Se deducen las retenciones ya efectuadas y se distribuye el resto en 9 meses
-      const retentionsJanToMar = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 3);
-      const remainingTax = finalAnnualTax - retentionsJanToMar;
-      monthlyRetention = remainingTax / 9;
-    } else if (month === 5 || month === 6 || month === 7) {
-      // 3. Mayo, Junio y Julio: (IAF - Retenciones enero-abril) ÷ 8
-      // Se deducen las retenciones ya efectuadas y se distribuye el resto en 8 meses
-      const retentionsJanToApr = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 4);
-      const remainingTax = finalAnnualTax - retentionsJanToApr;
-      monthlyRetention = remainingTax / 8;
-    } else if (month === 8) {
-      // 4. Agosto: (IAF - Retenciones enero-julio) ÷ 5
-      // Se deducen las retenciones ya efectuadas y se distribuye el resto en 5 meses
-      const retentionsJanToJul = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 7);
-      const remainingTax = finalAnnualTax - retentionsJanToJul;
-      monthlyRetention = remainingTax / 5;
-    } else if (month === 9 || month === 10 || month === 11) {
-      // 5. Setiembre, Octubre y Noviembre: (IAF - Retenciones enero-agosto) ÷ 4
-      // Se deducen las retenciones ya efectuadas y se distribuye el resto en 4 meses
-      const retentionsJanToAug = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 8);
-      const remainingTax = finalAnnualTax - retentionsJanToAug;
-      monthlyRetention = remainingTax / 4;
-    } else if (month === 12) {
-      // 6. Diciembre: Ajuste final del Impuesto
-      // Se deducen las retenciones efectuadas de enero a noviembre
-      // El resultado es la retención final para completar el impuesto anual
-      const retentionsJanToNov = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 11);
-      monthlyRetention = finalAnnualTax - retentionsJanToNov;
+    if (isSimpleCase) {
+      // CASO SIMPLE: Sueldo fijo sin ingresos adicionales
+      // Distribuir uniformemente el impuesto anual
+      if (month === 12) {
+        // Diciembre: ajuste final para completar exactamente el impuesto anual
+        // Calcular cuánto se ha retenido en los 11 meses anteriores
+        const previousRetentions = monthlyCalculations
+          .filter(calc => calc.month < 12)
+          .reduce((sum, calc) => sum + calc.monthlyRetention, 0);
+        
+        // El ajuste final es la diferencia para completar exactamente el impuesto anual
+        monthlyRetention = finalAnnualTax - previousRetentions;
+      } else {
+        // Otros meses: distribución uniforme
+        monthlyRetention = finalAnnualTax / 12;
+      }
+    } else {
+      // CASO COMPLEJO: Con ingresos adicionales - usar metodología SUNAT original
+      // PASO 4: Aplicar metodología SUNAT exacta según el mes
+      // El fraccionamiento se hace de manera progresiva para distribuir la carga tributaria
+      
+      if (month === 1 || month === 2 || month === 3) {
+        // 1. Enero, Febrero y Marzo: Impuesto Anual Final ÷ 12
+        // Se distribuye uniformemente en los primeros tres meses
+        monthlyRetention = finalAnnualTax / 12;
+      } else if (month === 4) {
+        // 2. Abril: (IAF - Retenciones enero-marzo) ÷ 9
+        // Se deducen las retenciones ya efectuadas y se distribuye el resto en 9 meses
+        const retentionsJanToMar = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 3);
+        const remainingTax = finalAnnualTax - retentionsJanToMar;
+        monthlyRetention = remainingTax / 9;
+      } else if (month === 5 || month === 6 || month === 7) {
+        // 3. Mayo, Junio y Julio: (IAF - Retenciones enero-abril) ÷ 8
+        // Se deducen las retenciones ya efectuadas y se distribuye el resto en 8 meses
+        const retentionsJanToApr = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 4);
+        const remainingTax = finalAnnualTax - retentionsJanToApr;
+        monthlyRetention = remainingTax / 8;
+      } else if (month === 8) {
+        // 4. Agosto: (IAF - Retenciones enero-julio) ÷ 5
+        // Se deducen las retenciones ya efectuadas y se distribuye el resto en 5 meses
+        const retentionsJanToJul = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 7);
+        const remainingTax = finalAnnualTax - retentionsJanToJul;
+        monthlyRetention = remainingTax / 5;
+      } else if (month === 9 || month === 10 || month === 11) {
+        // 5. Setiembre, Octubre y Noviembre: (IAF - Retenciones enero-agosto) ÷ 4
+        // Se deducen las retenciones ya efectuadas y se distribuye el resto en 4 meses
+        const retentionsJanToAug = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 8);
+        const remainingTax = finalAnnualTax - retentionsJanToAug;
+        monthlyRetention = remainingTax / 4;
+      } else if (month === 12) {
+        // 6. Diciembre: Ajuste final del Impuesto
+        // Se deducen las retenciones efectuadas de enero a noviembre
+        // El resultado es la retención final para completar el impuesto anual
+        const retentionsJanToNov = this.calculateAccumulatedRetentionsUpToMonth(monthlyCalculations, 11);
+        monthlyRetention = finalAnnualTax - retentionsJanToNov;
+      }
     }
     
     // Asegurar que la retención no sea negativa
@@ -1121,9 +1235,8 @@ export class SunatCalculator {
     // Primero se resta la deducción de 7 UIT para obtener el ingreso neto
     const netIncomeWithExtraordinary = Math.max(0, incomeWithExtraordinary - deduction7UIT);
     
-    // Se aplican las tasas progresivas del Artículo 53°
-    const effectiveTaxRate = this.calculateEffectiveTaxRateByTramo(netIncomeWithExtraordinary);
-    const taxOnIncomeWithExtraordinary = netIncomeWithExtraordinary * effectiveTaxRate;
+    // CORRECCIÓN: Usar cálculo progresivo por tramos, NO tasa plana
+    const taxOnIncomeWithExtraordinary = this.calculateProgressiveTax(netIncomeWithExtraordinary);
     
     // PASO 5.2.iii: Del resultado se deduce el monto calculado en el Paso c) (créditos)
     // Los créditos se aplican proporcionalmente al ingreso extraordinario
@@ -1132,11 +1245,31 @@ export class SunatCalculator {
     
     const taxAfterCredits = Math.max(0, taxOnIncomeWithExtraordinary - proportionalCredits);
     
-    // PASO 5.2.iv: El resultado es la retención adicional del mes
-    // Esta retención se suma a la ordinaria para obtener el total
-    const additionalRetention = taxAfterCredits;
+    // CORRECCIÓN: La retención adicional debe ser la DIFERENCIA entre:
+    // 1. El impuesto sobre la RBA + ingreso extraordinario
+    // 2. El impuesto ya calculado sobre la RBA base
     
-    return this.round(additionalRetention, 2);
+    // Calcular el impuesto base sobre la RBA original (sin ingreso extraordinario)
+    const netIncomeBase = Math.max(0, rbaFullYear - deduction7UIT);
+    // CORRECCIÓN: Usar cálculo progresivo por tramos, NO tasa plana
+    const taxOnBaseIncome = this.calculateProgressiveTax(netIncomeBase);
+    const taxOnBaseAfterCredits = Math.max(0, taxOnBaseIncome - totalTaxCredits);
+    
+    // La retención adicional es la diferencia entre ambos impuestos
+    const additionalRetention = Math.max(0, taxAfterCredits - taxOnBaseAfterCredits);
+    
+    // CORRECCIÓN: Eliminar el tope del 30% que no existe en la metodología SUNAT
+    // La retención adicional debe ser la diferencia real de impuestos
+    const finalAdditionalRetention = additionalRetention;
+    
+    console.log(`🔍 CÁLCULO RETENCIÓN ADICIONAL MES ${month}:`);
+    console.log(`   • Ingreso Extraordinario: S/ ${monthlyExtraordinaryIncome.toFixed(2)}`);
+    console.log(`   • Impuesto Base (RBA original): S/ ${taxOnBaseAfterCredits.toFixed(2)}`);
+    console.log(`   • Impuesto Total (RBA + extraordinario): S/ ${taxAfterCredits.toFixed(2)}`);
+    console.log(`   • Retención Adicional Calculada: S/ ${additionalRetention.toFixed(2)}`);
+    console.log(`   • Retención Adicional Final: S/ ${finalAdditionalRetention.toFixed(2)}`);
+    
+    return this.round(finalAdditionalRetention, 2);
   }
 
   /**
