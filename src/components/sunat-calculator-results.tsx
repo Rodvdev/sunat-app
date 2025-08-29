@@ -23,7 +23,6 @@ export function SunatCalculatorResults({ result }: SunatCalculatorResultsProps) 
   const generateMonthTooltip = (month: SunatCalculationResult['monthlyCalculations'][0], index: number, allMonths: SunatCalculationResult['monthlyCalculations']) => {
     const hasPreviousAdditionalIncome = allMonths.slice(0, index).some(m => m.additionalIncome > 0);
     const isFirstAdditionalIncomeMonth = month.additionalIncome > 0 && !hasPreviousAdditionalIncome;
-    const isAfterAdditionalIncome = hasPreviousAdditionalIncome && month.additionalIncome === 0;
     
     return (
       <div className="w-96 max-w-md bg-white border border-[#E0E0E0] rounded-lg shadow-xl p-6 mx-auto">
